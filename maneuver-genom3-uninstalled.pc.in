@@ -1,0 +1,11 @@
+# pkg-config file for uninstalled maneuver interface and codels library
+#
+prefix=@abs_top_builddir@
+libdir=${prefix}/codels
+includedir=${prefix}/codels
+
+Name: maneuver-genom3
+Description: maneuver interface and codels library
+Version: @PACKAGE_VERSION@
+Requires: openrobots-idl >= 1.2, libkdtp, eigen3
+Libs: ${libdir}/libmaneuver_codels.la

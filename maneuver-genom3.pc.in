@@ -1,0 +1,15 @@
+# pkg-config file for maneuver interface and codels library
+#
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+idldir=@datadir@/idl
+
+Name: maneuver-genom3
+Description: maneuver interface and codels library
+Version: @PACKAGE_VERSION@
+Requires: openrobots-idl >= 1.2, libkdtp, eigen3
+Cflags: -I${includedir} -I${idldir}
+Libs: -L${libdir} -lmaneuver_codels

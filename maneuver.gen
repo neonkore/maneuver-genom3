@@ -1,0 +1,137 @@
+/*/
+ * Copyright (c) 2016 LAAS/CNRS
+ * All rights reserved.
+ *
+ * Redistribution and use  in source  and binary  forms,  with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *   1. Redistributions of  source  code must retain the  above copyright
+ *      notice and this list of conditions.
+ *   2. Redistributions in binary form must reproduce the above copyright
+ *      notice and  this list of  conditions in the  documentation and/or
+ *      other materials provided with the distribution.
+ *
+ *                                      Anthony Mallet on Mon Aug 22 2016
+ */
+#pragma require "openrobots-idl >= 1.2"
+
+#include "or/pose/pose_estimator.gen"
+
+component maneuver {
+  version		"1.0";
+  email			"openrobots@laas.fr";
+  lang			"c";
+  codels-require	"libkdtp", "eigen3";
+
+  uses		or_pose_estimator;
+
+  port in	or_pose_estimator::state state;
+  port out	or_pose_estimator::state desired;
+
+  exception e_nostate;
+  exception e_sys { short code; string<128> what; };
+
+  native planner_s;
+  native log_s;
+
+  ids {
+    planner_s planner;
+
+    struct trajectory_s {
+      sequence<or_pose_estimator::state> t;
+      unsigned long i;
+    } trajectory;
+  };
+
+  const unsigned short control_period_ms = 5;
+
+
+  /* --- planning ---------------------------------------------------------- */
+
+  task plan {
+    codel<start> mv_plan_start(out ::ids) yield ether;
+    codel<stop> mv_plan_stop(inout ::ids) yield ether;
+  };
+
+  activity take_off(in double height) {
+    doc		"Vertical take-off from current state";
+    task	plan;
+
+    local sequence<or_pose_estimator::state> path;
+    local or::t3d::pos start;
+
+    codel<start> mv_current_state_start(in state, out start)
+      yield plan;
+    async codel<plan> mv_take_off_plan(in planner, in start, in height,
+                                       out path)
+      yield exec;
+    codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
+      yield pause::exec, wait;
+    codel<wait> mv_plan_exec_wait(in trajectory)
+      yield pause::wait, ether;
+
+    codel<stop> mv_plan_exec_stop(out trajectory)
+      yield ether;
+
+    throw e_nostate;
+    interrupt take_off, goto;
+  };
+
+  activity goto(in double x, in double y, in double z, in double yaw) {
+    doc		"Reach a given position from current state";
+    task	plan;
+
+    local sequence<or_pose_estimator::state> path;
+    local or::t3d::pos start;
+
+    codel<start> mv_current_state_start(in state, out start)
+      yield plan;
+    async codel<plan> mv_goto_plan(in planner, in start,
+                                   in x, in y, in z, in yaw, out path)
+      yield exec;
+    codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
+      yield pause::exec, wait;
+    codel<wait> mv_plan_exec_wait(in trajectory)
+      yield pause::wait, ether;
+
+    codel<stop> mv_plan_exec_stop(out trajectory)
+      yield ether;
+
+    throw e_nostate;
+    interrupt take_off, goto;
+  };
+
+  activity waypoint(in double x, in double y, in double z, in double yaw) {
+    doc		"Push a given position to reach after last one";
+    task	plan;
+
+    local sequence<or_pose_estimator::state> path;
+    local or::t3d::pos start;
+
+    codel<start> mv_waypoint_start(in state, in trajectory, out start)
+      yield plan;
+    async codel<plan> mv_goto_plan(in planner, in start,
+                                   in x, in y, in z, in yaw, out path)
+      yield exec;
+    codel<exec> mv_waypoint_add(in planner, in path, inout trajectory)
+      yield ether;
+  };
+
+
+  /* --- execution --------------------------------------------------------- */
+
+  task exec {
+    period control_period_ms ms;
+
+    codel<start> mv_exec_start(out desired)
+      yield wait;
+    codel<wait> mv_exec_wait(in state, in trajectory)
+      yield pause::wait, main;
+    codel<main> mv_exec_main(in state, inout trajectory, out desired)
+      yield wait, pause::main, start;
+
+    codel<stop> mv_exec_stop() yield ether;
+  };
+
+};
