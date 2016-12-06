@@ -126,6 +126,14 @@ component maneuver {
     interrupt waypoint;
   };
 
+  activity wait() {
+    doc		"Wait until last waypoint/goto point is reached";
+    task	plan;
+
+    codel<start, wait> mv_plan_exec_wait(in trajectory)
+      yield pause::wait, ether;
+  };
+
 
   /* --- execution --------------------------------------------------------- */
 

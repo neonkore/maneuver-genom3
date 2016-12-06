@@ -390,6 +390,17 @@ mv_waypoint_add(const maneuver_planner_s *planner,
 }
 
 
+/* --- Activity wait ---------------------------------------------------- */
+
+/** Codel mv_plan_exec_wait of activity wait.
+ *
+ * Triggered by maneuver_start, maneuver_wait.
+ * Yields to maneuver_pause_wait, maneuver_ether.
+ */
+/* already defined in service take_off */
+
+
+
 /* --- local functions ----------------------------------------------------- */
 
 static genom_event
