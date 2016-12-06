@@ -59,7 +59,7 @@ component maneuver {
     task	plan;
 
     local sequence<or_pose_estimator::state> path;
-    local or::t3d::pos start;
+    local or_pose_estimator::state start;
 
     codel<start> mv_current_state_start(in state, out start)
       yield plan;
@@ -83,7 +83,7 @@ component maneuver {
     task	plan;
 
     local sequence<or_pose_estimator::state> path;
-    local or::t3d::pos start;
+    local or_pose_estimator::state start;
 
     codel<start> mv_current_state_start(in state, out start)
       yield plan;
@@ -102,20 +102,28 @@ component maneuver {
     interrupt take_off, goto;
   };
 
-  activity waypoint(in double x, in double y, in double z, in double yaw) {
+  activity waypoint(in double x, in double y, in double z, in double yaw,
+                    in double vx, in double vy, in double vz, in double wz,
+                    in double ax, in double ay, in double az) {
     doc		"Push a given position to reach after last one";
     task	plan;
 
     local sequence<or_pose_estimator::state> path;
-    local or::t3d::pos start;
+    local or_pose_estimator::state start;
 
     codel<start> mv_waypoint_start(in state, in trajectory, out start)
       yield plan;
-    async codel<plan> mv_goto_plan(in planner, in start,
-                                   in x, in y, in z, in yaw, out path)
+    async codel<plan> mv_waypoint_plan(in planner, in start,
+                                       in x, in y, in z, in yaw,
+                                       in vx, in vy, in vz, in wz,
+                                       in ax, in ay, in az,
+                                       out path)
       yield exec;
     codel<exec> mv_waypoint_add(in planner, in path, inout trajectory)
       yield ether;
+
+    throw e_nostate;
+    interrupt waypoint;
   };
 
 

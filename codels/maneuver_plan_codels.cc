@@ -85,12 +85,13 @@ mv_plan_stop(maneuver_ids *ids, genom_context self)
  * Throws maneuver_e_nostate.
  */
 genom_event
-mv_current_state_start(const maneuver_state *state, or_t3d_pos *start,
+mv_current_state_start(const maneuver_state *state,
+                       or_pose_estimator_state *start,
                        genom_context self)
 {
   if (state->read(self) != genom_ok) return maneuver_e_nostate(self);
   if (!state->data(self)->pos._present) return maneuver_e_nostate(self);
-  *start = state->data(self)->pos._value;
+  *start = *state->data(self);
   return maneuver_plan;
 }
 
@@ -102,7 +103,7 @@ mv_current_state_start(const maneuver_state *state, or_t3d_pos *start,
  */
 genom_event
 mv_take_off_plan(const maneuver_planner_s *planner,
-                 const or_t3d_pos *start, double height,
+                 const or_pose_estimator_state *start, double height,
                  sequence_or_pose_estimator_state *path,
                  genom_context self)
 {
@@ -110,18 +111,31 @@ mv_take_off_plan(const maneuver_planner_s *planner,
   kdtp::State to(planner->robot);
   genom_event e;
 
-  from.position()[0] = start->x;
-  from.position()[1] = start->y;
-  from.position()[2] = start->z;
+  const or_t3d_pos *p = &start->pos._value;
+  from.position()[0] = p->x;
+  from.position()[1] = p->y;
+  from.position()[2] = p->z;
   from.position()[3] = atan2(
-    2 * (start->qw*start->qz + start->qx*start->qy),
-    1 - 2 * (start->qy*start->qy + start->qz*start->qz));
+    2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
+  if (start->vel._present) {
+    const or_t3d_vel *v = &start->vel._value;
+    from.velocity()[0] = v->vx;
+    from.velocity()[1] = v->vy;
+    from.velocity()[2] = v->vz;
+    from.velocity()[3] = v->wz;
+  }
+  if (start->acc._present) {
+    const or_t3d_acc *a = &start->acc._value;
+    from.acceleration()[0] = a->ax;
+    from.acceleration()[1] = a->ay;
+    from.acceleration()[2] = a->az;
+  }
 
   to.position() = from.position();
   to.position()[2] = height;
 
-  kdtp::LocalPath p(planner->robot, from, to);
-  e = mv_sample_path(p, path, self);
+  kdtp::LocalPath lpath(planner->robot, from, to);
+  e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
   return maneuver_exec;
@@ -201,28 +215,42 @@ mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
  */
 genom_event
 mv_goto_plan(const maneuver_planner_s *planner,
-             const or_t3d_pos *start, double x, double y, double z,
-             double yaw, sequence_or_pose_estimator_state *path,
+             const or_pose_estimator_state *start, double x, double y,
+             double z, double yaw,
+             sequence_or_pose_estimator_state *path,
              genom_context self)
 {
   kdtp::State from(planner->robot);
   kdtp::State to(planner->robot);
   genom_event e;
 
-  from.position()[0] = start->x;
-  from.position()[1] = start->y;
-  from.position()[2] = start->z;
+  const or_t3d_pos *p = &start->pos._value;
+  from.position()[0] = p->x;
+  from.position()[1] = p->y;
+  from.position()[2] = p->z;
   from.position()[3] = atan2(
-    2 * (start->qw*start->qz + start->qx*start->qy),
-    1 - 2 * (start->qy*start->qy + start->qz*start->qz));
+    2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
+  if (start->vel._present) {
+    const or_t3d_vel *v = &start->vel._value;
+    from.velocity()[0] = v->vx;
+    from.velocity()[1] = v->vy;
+    from.velocity()[2] = v->vz;
+    from.velocity()[3] = v->wz;
+  }
+  if (start->acc._present) {
+    const or_t3d_acc *a = &start->acc._value;
+    from.acceleration()[0] = a->ax;
+    from.acceleration()[1] = a->ay;
+    from.acceleration()[2] = a->az;
+  }
 
   to.position()[0] = x;
   to.position()[1] = y;
   to.position()[2] = z;
   to.position()[3] = yaw;
 
-  kdtp::LocalPath p(planner->robot, from, to);
-  e = mv_sample_path(p, path, self);
+  kdtp::LocalPath lpath(planner->robot, from, to);
+  e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
   return maneuver_exec;
@@ -262,32 +290,85 @@ mv_goto_plan(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_plan.
+ * Throws maneuver_e_nostate.
  */
 genom_event
 mv_waypoint_start(const maneuver_state *state,
                   const maneuver_ids_trajectory_s *trajectory,
-                  or_t3d_pos *start, genom_context self)
+                  or_pose_estimator_state *start, genom_context self)
 {
   if (trajectory->t._length > 0) {
-    *start = trajectory->t._buffer[trajectory->t._length - 1].pos._value;
+    *start = trajectory->t._buffer[trajectory->t._length - 1];
     return maneuver_plan;
   }
 
   return mv_current_state_start(state, start, self);
 }
 
-/** Codel mv_goto_plan of activity waypoint.
+/** Codel mv_waypoint_plan of activity waypoint.
  *
  * Triggered by maneuver_plan.
  * Yields to maneuver_exec.
+ * Throws maneuver_e_nostate.
  */
-/* already defined in service goto */
+genom_event
+mv_waypoint_plan(const maneuver_planner_s *planner,
+                 const or_pose_estimator_state *start, double x,
+                 double y, double z, double yaw, double vx, double vy,
+                 double vz, double wz, double ax, double ay, double az,
+                 sequence_or_pose_estimator_state *path,
+                 genom_context self)
+{
+  kdtp::State from(planner->robot);
+  kdtp::State to(planner->robot);
+  genom_event e;
 
+  const or_t3d_pos *p = &start->pos._value;
+  from.position()[0] = p->x;
+  from.position()[1] = p->y;
+  from.position()[2] = p->z;
+  from.position()[3] = atan2(
+    2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
+  if (start->vel._present) {
+    const or_t3d_vel *v = &start->vel._value;
+    from.velocity()[0] = v->vx;
+    from.velocity()[1] = v->vy;
+    from.velocity()[2] = v->vz;
+    from.velocity()[3] = v->wz;
+  }
+  if (start->acc._present) {
+    const or_t3d_acc *a = &start->acc._value;
+    from.acceleration()[0] = a->ax;
+    from.acceleration()[1] = a->ay;
+    from.acceleration()[2] = a->az;
+  }
+
+  to.position()[0] = x;
+  to.position()[1] = y;
+  to.position()[2] = z;
+  to.position()[3] = yaw;
+
+  to.velocity()[0] = vx;
+  to.velocity()[1] = vy;
+  to.velocity()[2] = vz;
+  to.velocity()[3] = wz;
+
+  to.acceleration()[0] = ax;
+  to.acceleration()[1] = ay;
+  to.acceleration()[2] = az;
+
+  kdtp::LocalPath lpath(planner->robot, from, to);
+  e = mv_sample_path(lpath, path, self);
+  if (e) return e;
+
+  return maneuver_exec;
+}
 
 /** Codel mv_waypoint_add of activity waypoint.
  *
  * Triggered by maneuver_exec.
  * Yields to maneuver_ether.
+ * Throws maneuver_e_nostate.
  */
 genom_event
 mv_waypoint_add(const maneuver_planner_s *planner,
