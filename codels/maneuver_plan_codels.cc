@@ -44,19 +44,20 @@ static genom_event	mv_sample_path(const kdtp::LocalPath &p,
 genom_event
 mv_plan_start(maneuver_ids *ids, genom_context self)
 {
-  static const double vmax = 0.3;
-  static const double wmax = 1.;
+  static const double vmax = 1;
+  static const double amax = 5;
+  static const double wmax = 1.5;
 
   ids->planner = new maneuver_planner_s;
 
   ids->planner->robot.addDof(
-    kdtp::Dof(-3.5, 3.5, vmax, vmax, vmax, vmax, false));
+    kdtp::Dof(-3.5, 3.5, vmax, amax, amax, 10*amax, false));
   ids->planner->robot.addDof(
-    kdtp::Dof(-1.5, 1.5, vmax, vmax, vmax, vmax, false));
+    kdtp::Dof(-1.5, 1.5, vmax, amax, amax, 10*amax, false));
   ids->planner->robot.addDof(
-    kdtp::Dof( 0.,  5.,  vmax, vmax, vmax, vmax, false));
+    kdtp::Dof( 0.,  5.,  vmax, amax, amax, 10*amax, false));
   ids->planner->robot.addDof(
-    kdtp::Dof(-3*M_PI, 3*M_PI,  wmax, wmax, wmax, wmax, true));
+    kdtp::Dof(-3*M_PI, 3*M_PI, wmax, 10*wmax, 100*wmax, 100*wmax, true));
 
   return maneuver_ether;
 }
