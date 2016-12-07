@@ -36,7 +36,9 @@
  * Yields to maneuver_wait.
  */
 genom_event
-mv_exec_start(const maneuver_desired *desired, genom_context self)
+mv_exec_start(const maneuver_desired *desired,
+              maneuver_ids_trajectory_s *trajectory,
+              genom_context self)
 {
   or_pose_estimator_state *ddata;
   struct timeval tv;
@@ -54,6 +56,9 @@ mv_exec_start(const maneuver_desired *desired, genom_context self)
   ddata->acc._present = false;
   ddata->acc_cov._present = false;
   desired->write(self);
+
+  trajectory->t._length = 0;
+  trajectory->i = 0;
 
   return maneuver_wait;
 }

@@ -140,7 +140,7 @@ component maneuver {
   task exec {
     period control_period_ms ms;
 
-    codel<start> mv_exec_start(out desired)
+    codel<start> mv_exec_start(out desired, out trajectory)
       yield wait;
     codel<wait> mv_exec_wait(in state, in trajectory)
       yield pause::wait, main;
