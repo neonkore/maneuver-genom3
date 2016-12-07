@@ -46,6 +46,27 @@ component maneuver {
 
   const unsigned short control_period_ms = 5;
 
+  function set_bounds(in double xmin, in double xmax,
+                      in double ymin, in double ymax,
+                      in double zmin, in double zmax,
+                      in double yawmin, in double yawmax) {
+    codel mv_set_bounds(inout planner,
+                        in xmin, in xmax, in ymin, in ymax, in zmin, in zmax,
+                        in yawmin, in yawmax);
+  };
+  function set_velocity(in double v, in double w) {
+    codel mv_set_velocity(inout planner, in v, in w);
+  };
+  function set_acceleration(in double a, in double dw) {
+    codel mv_set_acceleration(inout planner, in a, in dw);
+  };
+  function set_jerk(in double j, in double ddw) {
+    codel mv_set_jerk(inout planner, in j, in ddw);
+  };
+  function set_snap(in double s, in double dddw) {
+    codel mv_set_snap(inout planner, in s, in dddw);
+  };
+
 
   /* --- planning ---------------------------------------------------------- */
 
@@ -63,8 +84,7 @@ component maneuver {
 
     codel<start> mv_current_state_start(in state, out start)
       yield plan;
-    async codel<plan> mv_take_off_plan(in planner, in start, in height,
-                                       out path)
+    codel<plan> mv_take_off_plan(in planner, in start, in height, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
       yield pause::exec, wait;
@@ -87,8 +107,8 @@ component maneuver {
 
     codel<start> mv_current_state_start(in state, out start)
       yield plan;
-    async codel<plan> mv_goto_plan(in planner, in start,
-                                   in x, in y, in z, in yaw, out path)
+    codel<plan> mv_goto_plan(in planner, in start,
+                             in x, in y, in z, in yaw, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
       yield pause::exec, wait;
@@ -113,11 +133,11 @@ component maneuver {
 
     codel<start> mv_waypoint_start(in state, in trajectory, out start)
       yield plan;
-    async codel<plan> mv_waypoint_plan(in planner, in start,
-                                       in x, in y, in z, in yaw,
-                                       in vx, in vy, in vz, in wz,
-                                       in ax, in ay, in az,
-                                       out path)
+    codel<plan> mv_waypoint_plan(in planner, in start,
+                                 in x, in y, in z, in yaw,
+                                 in vx, in vy, in vz, in wz,
+                                 in ax, in ay, in az,
+                                 out path)
       yield exec;
     codel<exec> mv_waypoint_add(in planner, in path, inout trajectory)
       yield ether;

@@ -19,18 +19,11 @@
 #include <cmath>
 #include <iostream>
 
-#include "libkdtp.h"
-
 #include "maneuver_c_types.h"
+#include "codels.h"
 
 
 /* --- Task plan -------------------------------------------------------- */
-
-struct maneuver_planner_s {
-  kdtp::Robot robot;
-
-  maneuver_planner_s(): robot("rotorcraft") {}
-};
 
 static genom_event	mv_sample_path(const kdtp::LocalPath &p,
                                        sequence_or_pose_estimator_state *path,
