@@ -16,6 +16,8 @@
  */
 #include "acmaneuver.h"
 
+#include <cstdio>
+
 #include "maneuver_c_types.h"
 #include "codels.h"
 
@@ -111,5 +113,43 @@ mv_set_snap(maneuver_planner_s **planner, double s, double dddw,
   (*planner)->robot.getDof(1).setSnapMax(s);
   (*planner)->robot.getDof(2).setSnapMax(s);
   (*planner)->robot.getDof(3).setSnapMax(dddw);
+  return genom_ok;
+}
+
+
+/* --- Function log ----------------------------------------------------- */
+
+/** Codel mv_log of function log.
+ *
+ * Returns genom_ok.
+ * Throws maneuver_e_sys.
+ */
+genom_event
+mv_log(const char path[64], maneuver_log_s **log, genom_context self)
+{
+  FILE *f;
+
+  f = fopen(path, "w");
+  if (!f) return mv_e_sys_error(path, self);
+  fprintf(f, mv_log_header_fmt "\n");
+
+  if ((*log)->f) fclose((*log)->f);
+  (*log)->f = f;
+  return genom_ok;
+}
+
+
+/* --- Function log_stop ------------------------------------------------ */
+
+/** Codel mv_log_stop of function log_stop.
+ *
+ * Returns genom_ok.
+ */
+genom_event
+mv_log_stop(maneuver_log_s **log, genom_context self)
+{
+  if ((*log)->f) fclose((*log)->f);
+  (*log)->f = NULL;
+
   return genom_ok;
 }

@@ -42,6 +42,9 @@ component maneuver {
       sequence<or_pose_estimator::state> t;
       unsigned long i;
     } trajectory;
+
+    /* logging */
+    log_s log;
   };
 
   const unsigned short control_period_ms = 5;
@@ -164,10 +167,26 @@ component maneuver {
       yield wait;
     codel<wait> mv_exec_wait(in state, in trajectory)
       yield pause::wait, main;
-    codel<main> mv_exec_main(in state, inout trajectory, out desired)
+    codel<main> mv_exec_main(in state, inout trajectory, out desired, in log)
       yield wait, pause::main, start;
 
     codel<stop> mv_exec_stop() yield ether;
   };
 
+
+  /* --- logging ----------------------------------------------------------- */
+
+  function log(in string<64> path = "/tmp/maneuver.log": "Log file name") {
+    doc		"Log state";
+
+    codel mv_log(in path, inout log);
+
+    throw e_sys;
+  };
+
+  function log_stop() {
+    doc		"Stop logging";
+
+    codel mv_log_stop(out log);
+  };
 };

@@ -52,6 +52,11 @@ mv_plan_start(maneuver_ids *ids, genom_context self)
   ids->planner->robot.addDof(
     kdtp::Dof(-3*M_PI, 3*M_PI, wmax, 10*wmax, 100*wmax, 100*wmax, true));
 
+  /* init logging */
+  ids->log = new maneuver_log_s;
+  if (!ids->log) abort();
+  ids->log->f = NULL;
+
   return maneuver_ether;
 }
 
@@ -64,7 +69,10 @@ mv_plan_start(maneuver_ids *ids, genom_context self)
 genom_event
 mv_plan_stop(maneuver_ids *ids, genom_context self)
 {
+  mv_log_stop(&ids->log, self);
+
   delete ids->planner;
+  delete ids->log;
 
   return maneuver_ether;
 }

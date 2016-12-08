@@ -25,6 +25,7 @@
 #include <Eigen/Geometry>
 
 #include "maneuver_c_types.h"
+#include "codels.h"
 
 
 /* --- Task exec -------------------------------------------------------- */
@@ -88,7 +89,8 @@ mv_exec_wait(const maneuver_state *state,
 genom_event
 mv_exec_main(const maneuver_state *state,
              maneuver_ids_trajectory_s *trajectory,
-             const maneuver_desired *desired, genom_context self)
+             const maneuver_desired *desired,
+             const maneuver_log_s *log, genom_context self)
 {
   const double dt = maneuver_control_period_ms * 1e-3;
 
@@ -176,6 +178,25 @@ mv_exec_main(const maneuver_state *state,
   sdata->ts.sec = tv.tv_sec;
   sdata->ts.nsec = 1000*tv.tv_usec;
   desired->write(self);
+
+  /* logging */
+  if (log->f) {
+    double qw = sdata->pos._value.qw;
+    double
+      qx = sdata->pos._value.qx,
+      qy = sdata->pos._value.qy,
+      qz = sdata->pos._value.qz;
+    double yaw = atan2(2 * (qw*qz + qx*qy), 1 - 2 * (qy*qy + qz*qz));
+
+    fprintf(
+      log->f, mv_log_fmt "\n",
+      sdata->ts.sec, sdata->ts.nsec,
+      sdata->pos._value.x, sdata->pos._value.y, sdata->pos._value.z,
+      yaw,
+      sdata->vel._value.vx, sdata->vel._value.vy, sdata->vel._value.vz,
+      sdata->vel._value.wz,
+      sdata->acc._value.ax, sdata->acc._value.ay, sdata->acc._value.az);
+  }
 
   /* next */
   if (pdist > 0.1 || qdist > 0.2)
