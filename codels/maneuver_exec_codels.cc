@@ -22,8 +22,6 @@
 #include <cstdio>
 #include <limits>
 
-#include <Eigen/Geometry>
-
 #include "maneuver_c_types.h"
 #include "codels.h"
 
