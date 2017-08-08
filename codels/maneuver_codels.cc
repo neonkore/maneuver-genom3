@@ -117,6 +117,44 @@ mv_set_snap(maneuver_planner_s **planner, double s, double dddw,
 }
 
 
+/* --- Function get_limits ---------------------------------------------- */
+
+/** Codel mv_get_limits of function get_limits.
+ *
+ * Returns genom_ok.
+ */
+genom_event
+mv_get_limits(maneuver_planner_s **planner, double *xmin, double *xmax,
+              double *ymin, double *ymax, double *zmin, double *zmax,
+              double *yawmin, double *yawmax, double *v, double *w,
+              double *a, double *dw, double *j, double *ddw, double *s,
+              double *dddw, const genom_context self)
+{
+  *xmin = (*planner)->robot.getDof(0).getPositionMin();
+  *xmax = (*planner)->robot.getDof(0).getPositionMax();
+  *ymin = (*planner)->robot.getDof(1).getPositionMin();
+  *ymax = (*planner)->robot.getDof(1).getPositionMax();
+  *zmin = (*planner)->robot.getDof(2).getPositionMin();
+  *zmax = (*planner)->robot.getDof(2).getPositionMax();
+  *yawmin = (*planner)->robot.getDof(3).getPositionMin();
+  *yawmax = (*planner)->robot.getDof(3).getPositionMax();
+
+  *v = (*planner)->robot.getDof(0).getVelocityMax();
+  *w = (*planner)->robot.getDof(3).getVelocityMax();
+
+  *a = (*planner)->robot.getDof(0).getAccelerationMax();
+  *dw = (*planner)->robot.getDof(3).getAccelerationMax();
+
+  *j = (*planner)->robot.getDof(0).getJerkMax();
+  *ddw = (*planner)->robot.getDof(3).getJerkMax();
+
+  *s = (*planner)->robot.getDof(0).getSnapMax();
+  *dddw = (*planner)->robot.getDof(3).getSnapMax();
+
+  return genom_ok;
+}
+
+
 /* --- Function log ----------------------------------------------------- */
 
 /** Codel mv_log of function log.

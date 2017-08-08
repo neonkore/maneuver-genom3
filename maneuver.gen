@@ -70,6 +70,25 @@ component maneuver {
     codel mv_set_snap(inout planner, in s, in dddw);
   };
 
+  function get_limits(out double xmin, out double xmax,
+                      out double ymin, out double ymax,
+                      out double zmin, out double zmax,
+                      out double yawmin, out double yawmax,
+                      out double v, out double w,
+                      out double a, out double dw,
+                      out double j, out double ddw,
+                      out double s, out double dddw) {
+    codel mv_get_limits(inout planner,
+                        out xmin, out xmax,
+                        out ymin, out ymax,
+                        out zmin, out zmax,
+                        out yawmin, out yawmax,
+                        out v, out w,
+                        out a, out dw,
+                        out j, out ddw,
+                        out s, out dddw);
+  };
+
 
   /* --- planning ---------------------------------------------------------- */
 
