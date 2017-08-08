@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016 LAAS/CNRS
+# Copyright (c) 2016-2017 LAAS/CNRS
 # All rights reserved.
 #
 # Redistribution and use  in source  and binary  forms,  with or without

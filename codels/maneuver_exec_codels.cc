@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 LAAS/CNRS
+ * Copyright (c) 2016-2017 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution and use  in source  and binary  forms,  with or without
@@ -150,5 +150,23 @@ mv_exec_main(const maneuver_state *state,
 genom_event
 mv_exec_stop(const genom_context self)
 {
+  return maneuver_ether;
+}
+
+
+/* --- Activity reset --------------------------------------------------- */
+
+/** Codel mv_exec_reset of activity reset.
+ *
+ * Triggered by maneuver_start.
+ * Yields to maneuver_ether.
+ */
+genom_event
+mv_exec_reset(maneuver_ids_trajectory_s *trajectory,
+              const maneuver_desired *desired,
+              const genom_context self)
+{
+  (void)mv_exec_start(desired, trajectory, self);
+
   return maneuver_ether;
 }
