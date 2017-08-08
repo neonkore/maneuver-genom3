@@ -19,7 +19,7 @@
 #include "or/pose/pose_estimator.gen"
 
 component maneuver {
-  version		"1.0";
+  version		"1.1";
   email			"openrobots@laas.fr";
   lang			"c";
   codels-require	"libkdtp";
