@@ -31,7 +31,7 @@
 genom_event
 mv_set_bounds(maneuver_planner_s **planner, double xmin, double xmax,
               double ymin, double ymax, double zmin, double zmax,
-              double yawmin, double yawmax, genom_context self)
+              double yawmin, double yawmax, const genom_context self)
 {
   (*planner)->robot.getDof(0).setPositionMin(xmin);
   (*planner)->robot.getDof(0).setPositionMax(xmax);
@@ -53,7 +53,7 @@ mv_set_bounds(maneuver_planner_s **planner, double xmin, double xmax,
  */
 genom_event
 mv_set_velocity(maneuver_planner_s **planner, double v, double w,
-                genom_context self)
+                const genom_context self)
 {
   (*planner)->robot.getDof(0).setVelocityMax(v);
   (*planner)->robot.getDof(1).setVelocityMax(v);
@@ -71,7 +71,7 @@ mv_set_velocity(maneuver_planner_s **planner, double v, double w,
  */
 genom_event
 mv_set_acceleration(maneuver_planner_s **planner, double a, double dw,
-                    genom_context self)
+                    const genom_context self)
 {
   (*planner)->robot.getDof(0).setAccelerationMax(a);
   (*planner)->robot.getDof(1).setAccelerationMax(a);
@@ -89,7 +89,7 @@ mv_set_acceleration(maneuver_planner_s **planner, double a, double dw,
  */
 genom_event
 mv_set_jerk(maneuver_planner_s **planner, double j, double ddw,
-            genom_context self)
+            const genom_context self)
 {
   (*planner)->robot.getDof(0).setJerkMax(j);
   (*planner)->robot.getDof(1).setJerkMax(j);
@@ -107,7 +107,7 @@ mv_set_jerk(maneuver_planner_s **planner, double j, double ddw,
  */
 genom_event
 mv_set_snap(maneuver_planner_s **planner, double s, double dddw,
-            genom_context self)
+            const genom_context self)
 {
   (*planner)->robot.getDof(0).setSnapMax(s);
   (*planner)->robot.getDof(1).setSnapMax(s);
@@ -125,7 +125,8 @@ mv_set_snap(maneuver_planner_s **planner, double s, double dddw,
  * Throws maneuver_e_sys.
  */
 genom_event
-mv_log(const char path[64], maneuver_log_s **log, genom_context self)
+mv_log(const char path[64], maneuver_log_s **log,
+       const genom_context self)
 {
   FILE *f;
 
@@ -146,7 +147,7 @@ mv_log(const char path[64], maneuver_log_s **log, genom_context self)
  * Returns genom_ok.
  */
 genom_event
-mv_log_stop(maneuver_log_s **log, genom_context self)
+mv_log_stop(maneuver_log_s **log, const genom_context self)
 {
   if ((*log)->f) fclose((*log)->f);
   (*log)->f = NULL;

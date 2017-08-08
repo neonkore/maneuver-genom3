@@ -37,7 +37,7 @@
 genom_event
 mv_exec_start(const maneuver_desired *desired,
               maneuver_ids_trajectory_s *trajectory,
-              genom_context self)
+              const genom_context self)
 {
   or_pose_estimator_state *ddata;
   struct timeval tv;
@@ -71,7 +71,7 @@ mv_exec_start(const maneuver_desired *desired,
 genom_event
 mv_exec_wait(const maneuver_state *state,
              const maneuver_ids_trajectory_s *trajectory,
-             genom_context self)
+             const genom_context self)
 {
   if (trajectory->t._length == 0) return maneuver_pause_wait;
 
@@ -88,7 +88,7 @@ genom_event
 mv_exec_main(const maneuver_state *state,
              maneuver_ids_trajectory_s *trajectory,
              const maneuver_desired *desired,
-             const maneuver_log_s *log, genom_context self)
+             const maneuver_log_s *log, const genom_context self)
 {
   or_pose_estimator_state *sdata;
   struct timeval tv;
@@ -148,7 +148,7 @@ mv_exec_main(const maneuver_state *state,
  * Yields to maneuver_ether.
  */
 genom_event
-mv_exec_stop(genom_context self)
+mv_exec_stop(const genom_context self)
 {
   return maneuver_ether;
 }

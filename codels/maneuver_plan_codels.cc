@@ -35,7 +35,7 @@ static genom_event	mv_sample_path(const kdtp::LocalPath &p,
  * Yields to maneuver_ether.
  */
 genom_event
-mv_plan_start(maneuver_ids *ids, genom_context self)
+mv_plan_start(maneuver_ids *ids, const genom_context self)
 {
   static const double vmax = 1;
   static const double amax = 5;
@@ -67,7 +67,7 @@ mv_plan_start(maneuver_ids *ids, genom_context self)
  * Yields to maneuver_ether.
  */
 genom_event
-mv_plan_stop(maneuver_ids *ids, genom_context self)
+mv_plan_stop(maneuver_ids *ids, const genom_context self)
 {
   mv_log_stop(&ids->log, self);
 
@@ -89,7 +89,7 @@ mv_plan_stop(maneuver_ids *ids, genom_context self)
 genom_event
 mv_current_state_start(const maneuver_state *state,
                        or_pose_estimator_state *start,
-                       genom_context self)
+                       const genom_context self)
 {
   if (state->read(self) != genom_ok) return maneuver_e_nostate(self);
   if (!state->data(self)->pos._present) return maneuver_e_nostate(self);
@@ -107,7 +107,7 @@ genom_event
 mv_take_off_plan(const maneuver_planner_s *planner,
                  const or_pose_estimator_state *start, double height,
                  sequence_or_pose_estimator_state *path,
-                 genom_context self)
+                 const genom_context self)
 {
   kdtp::State from(planner->robot);
   kdtp::State to(planner->robot);
@@ -153,7 +153,7 @@ genom_event
 mv_plan_exec(const maneuver_planner_s *planner,
              const sequence_or_pose_estimator_state *path,
              maneuver_ids_trajectory_s *trajectory,
-             genom_context self)
+             const genom_context self)
 {
   size_t i;
 
@@ -177,7 +177,7 @@ mv_plan_exec(const maneuver_planner_s *planner,
  */
 genom_event
 mv_plan_exec_wait(const maneuver_ids_trajectory_s *trajectory,
-                  genom_context self)
+                  const genom_context self)
 {
   if (trajectory->t._length > 0) return maneuver_pause_wait;
   return maneuver_ether;
@@ -191,7 +191,7 @@ mv_plan_exec_wait(const maneuver_ids_trajectory_s *trajectory,
  */
 genom_event
 mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
-                  genom_context self)
+                  const genom_context self)
 {
   trajectory->t._length = 0;
   return maneuver_ether;
@@ -220,7 +220,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
              const or_pose_estimator_state *start, double x, double y,
              double z, double yaw,
              sequence_or_pose_estimator_state *path,
-             genom_context self)
+             const genom_context self)
 {
   kdtp::State from(planner->robot);
   kdtp::State to(planner->robot);
@@ -297,7 +297,8 @@ mv_goto_plan(const maneuver_planner_s *planner,
 genom_event
 mv_waypoint_start(const maneuver_state *state,
                   const maneuver_ids_trajectory_s *trajectory,
-                  or_pose_estimator_state *start, genom_context self)
+                  or_pose_estimator_state *start,
+                  const genom_context self)
 {
   if (trajectory->t._length > 0) {
     *start = trajectory->t._buffer[trajectory->t._length - 1];
@@ -319,7 +320,7 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
                  double y, double z, double yaw, double vx, double vy,
                  double vz, double wz, double ax, double ay, double az,
                  sequence_or_pose_estimator_state *path,
-                 genom_context self)
+                 const genom_context self)
 {
   kdtp::State from(planner->robot);
   kdtp::State to(planner->robot);
@@ -376,7 +377,7 @@ genom_event
 mv_waypoint_add(const maneuver_planner_s *planner,
                 const sequence_or_pose_estimator_state *path,
                 maneuver_ids_trajectory_s *trajectory,
-                genom_context self)
+                const genom_context self)
 {
   size_t i, l;
 
