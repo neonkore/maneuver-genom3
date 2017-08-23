@@ -94,6 +94,12 @@ mv_current_state_start(const maneuver_state *state,
   if (state->read(self) != genom_ok) return maneuver_e_nostate(self);
   if (!state->data(self)->pos._present) return maneuver_e_nostate(self);
   *start = *state->data(self);
+
+  /* disregard current velocity and acceleration - the residual noise
+   * in those quantities generates weird trajectories */
+  start->vel._present = false;
+  start->acc._present = false;
+
   return maneuver_plan;
 }
 
@@ -119,6 +125,19 @@ mv_take_off_plan(const maneuver_planner_s *planner,
   from.position()[2] = p->z;
   from.position()[3] = atan2(
     2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
+  if (start->vel._present) {
+    const or_t3d_vel *v = &start->vel._value;
+    from.velocity()[0] = v->vx;
+    from.velocity()[1] = v->vy;
+    from.velocity()[2] = v->vz;
+    from.velocity()[3] = v->wz;
+  }
+  if (start->acc._present) {
+    const or_t3d_acc *a = &start->acc._value;
+    from.acceleration()[0] = a->ax;
+    from.acceleration()[1] = a->ay;
+    from.acceleration()[2] = a->az;
+  }
 
   to.position() = from.position();
   to.position()[2] = height;
