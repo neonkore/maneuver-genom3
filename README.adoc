@@ -1,0 +1,445 @@
+//
+// Copyright (c) 2016-2017 LAAS/CNRS
+// All rights reserved.
+//
+// Redistribution and use  in source  and binary  forms,  with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//   1. Redistributions of  source  code must retain the  above copyright
+//      notice and this list of conditions.
+//   2. Redistributions in binary form must reproduce the above copyright
+//      notice and  this list of  conditions in the  documentation and/or
+//      other materials provided with the distribution.
+//
+//                                      Anthony Mallet on Mon Aug 22 2016
+//
+
+// This file was generated from maneuver.gen by the skeleton
+// template. Manual changes should be preserved, although they should
+// rather be added to the "doc" attributes of the genom objects defined in
+// maneuver.gen.
+
+= maneuver component
+openrobots@laas.fr
+1.1
+:toc: left
+
+// fix default asciidoctor stylesheet issue #2407 and add hr clear rule
+ifdef::backend-html5[]
+[pass]
+++++
+<link rel="stylesheet" href="data:text/css,p{font-size: inherit !important}" >
+<link rel="stylesheet" href="data:text/css,hr{clear: both}" >
+++++
+endif::[]
+
+
+
+== Ports
+
+
+[[state]]
+=== state (in)
+
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Data structure
+[disc]
+ * `struct ::or_pose_estimator::state` `state`
+ ** `struct ::or::time::ts` `ts`
+ *** `unsigned long` `sec`
+ *** `unsigned long` `nsec`
+ ** `boolean` `intrinsic`
+ ** `optional< struct ::or::t3d::pos >` `pos`
+ *** `double` `x`
+ *** `double` `y`
+ *** `double` `z`
+ *** `double` `qw`
+ *** `double` `qx`
+ *** `double` `qy`
+ *** `double` `qz`
+ ** `optional< struct ::or::t3d::pos_cov >` `pos_cov`
+ *** `double` `cov[28]`
+ ** `optional< struct ::or::t3d::vel >` `vel`
+ *** `double` `vx`
+ *** `double` `vy`
+ *** `double` `vz`
+ *** `double` `wx`
+ *** `double` `wy`
+ *** `double` `wz`
+ ** `optional< struct ::or::t3d::vel_cov >` `vel_cov`
+ *** `double` `cov[21]`
+ ** `optional< struct ::or::t3d::acc >` `acc`
+ *** `double` `ax`
+ *** `double` `ay`
+ *** `double` `az`
+ ** `optional< struct ::or::t3d::acc_cov >` `acc_cov`
+ *** `double` `cov[6]`
+
+|===
+
+'''
+
+[[desired]]
+=== desired (out)
+
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Data structure
+[disc]
+ * `struct ::or_pose_estimator::state` `desired`
+ ** `struct ::or::time::ts` `ts`
+ *** `unsigned long` `sec`
+ *** `unsigned long` `nsec`
+ ** `boolean` `intrinsic`
+ ** `optional< struct ::or::t3d::pos >` `pos`
+ *** `double` `x`
+ *** `double` `y`
+ *** `double` `z`
+ *** `double` `qw`
+ *** `double` `qx`
+ *** `double` `qy`
+ *** `double` `qz`
+ ** `optional< struct ::or::t3d::pos_cov >` `pos_cov`
+ *** `double` `cov[28]`
+ ** `optional< struct ::or::t3d::vel >` `vel`
+ *** `double` `vx`
+ *** `double` `vy`
+ *** `double` `vz`
+ *** `double` `wx`
+ *** `double` `wy`
+ *** `double` `wz`
+ ** `optional< struct ::or::t3d::vel_cov >` `vel_cov`
+ *** `double` `cov[21]`
+ ** `optional< struct ::or::t3d::acc >` `acc`
+ *** `double` `ax`
+ *** `double` `ay`
+ *** `double` `az`
+ ** `optional< struct ::or::t3d::acc_cov >` `acc_cov`
+ *** `double` `cov[6]`
+
+|===
+
+'''
+
+== Services
+
+[[set_bounds]]
+=== set_bounds (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `xmin`
+
+ * `double` `xmax`
+
+ * `double` `ymin`
+
+ * `double` `ymax`
+
+ * `double` `zmin`
+
+ * `double` `zmax`
+
+ * `double` `yawmin`
+
+ * `double` `yawmax`
+
+|===
+
+'''
+
+[[set_velocity]]
+=== set_velocity (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `v`
+
+ * `double` `w`
+
+|===
+
+'''
+
+[[set_acceleration]]
+=== set_acceleration (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `a`
+
+ * `double` `dw`
+
+|===
+
+'''
+
+[[set_jerk]]
+=== set_jerk (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `j`
+
+ * `double` `ddw`
+
+|===
+
+'''
+
+[[set_snap]]
+=== set_snap (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `s`
+
+ * `double` `dddw`
+
+|===
+
+'''
+
+[[get_limits]]
+=== get_limits (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Outputs
+[disc]
+ * `double` `xmin`
+
+ * `double` `xmax`
+
+ * `double` `ymin`
+
+ * `double` `ymax`
+
+ * `double` `zmin`
+
+ * `double` `zmax`
+
+ * `double` `yawmin`
+
+ * `double` `yawmax`
+
+ * `double` `v`
+
+ * `double` `w`
+
+ * `double` `a`
+
+ * `double` `dw`
+
+ * `double` `j`
+
+ * `double` `ddw`
+
+ * `double` `s`
+
+ * `double` `dddw`
+
+|===
+
+'''
+
+[[take_off]]
+=== take_off (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `height`
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_nostate`
+
+a|.Context
+[disc]
+  * In task `<<plan>>`
+  * Reads port `<<state>>`
+  * Interrupts `<<take_off>>`
+  * Interrupts `<<goto>>`
+|===
+
+Vertical take-off from current state
+
+'''
+
+[[goto]]
+=== goto (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `x`
+
+ * `double` `y`
+
+ * `double` `z`
+
+ * `double` `yaw`
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_nostate`
+
+a|.Context
+[disc]
+  * In task `<<plan>>`
+  * Reads port `<<state>>`
+  * Interrupts `<<take_off>>`
+  * Interrupts `<<goto>>`
+|===
+
+Reach a given position from current state
+
+'''
+
+[[waypoint]]
+=== waypoint (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `x`
+
+ * `double` `y`
+
+ * `double` `z`
+
+ * `double` `yaw`
+
+ * `double` `vx`
+
+ * `double` `vy`
+
+ * `double` `vz`
+
+ * `double` `wz`
+
+ * `double` `ax`
+
+ * `double` `ay`
+
+ * `double` `az`
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_nostate`
+
+a|.Context
+[disc]
+  * In task `<<plan>>`
+  * Reads port `<<state>>`
+  * Interrupts `<<waypoint>>`
+|===
+
+Push a given position to reach after last one
+
+'''
+
+[[wait]]
+=== wait (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * In task `<<plan>>`
+|===
+
+Wait until last waypoint/goto point is reached
+
+'''
+
+[[reset]]
+=== reset (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * In task `<<exec>>`
+  (frequency 200.0 _Hz_)
+  * Updates port `<<desired>>`
+|===
+
+Reset the current trajectory and set desired state to empty
+
+'''
+
+[[log]]
+=== log (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `string<64>` `path` (default `"/tmp/maneuver.log"`) Log file name
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_sys`
+ ** `short` `code`
+ ** `string<128>` `what`
+
+|===
+
+Log state
+
+'''
+
+[[log_stop]]
+=== log_stop (function)
+
+
+Stop logging
+
+'''
+
+== Tasks
+
+[[plan]]
+=== plan
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * Free running
+|===
+
+'''
+
+[[exec]]
+=== exec
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * Frequency 200.0 _Hz_
+* Reads port `<<state>>`
+* Updates port `<<desired>>`
+|===
+
+'''

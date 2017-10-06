@@ -45,6 +45,8 @@ dnl --with-templates option
 AG_OPT_TEMPLATES([$GENOM3 ],
     [$srcdir/maneuver.gen])
 
+dnl Doc
+AM_MISSING_PROG([ASCIIDOCTOR], [asciidoctor])
 
 dnl Output
 AC_CONFIG_FILES([
