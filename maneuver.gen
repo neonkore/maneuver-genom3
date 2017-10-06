@@ -38,6 +38,7 @@ component maneuver {
   ids {
     planner_s planner;
 
+    or_pose_estimator::state start;
     struct trajectory_s {
       sequence<or_pose_estimator::state> t;
       unsigned long i;
@@ -97,16 +98,21 @@ component maneuver {
     codel<stop> mv_plan_stop(inout ::ids) yield ether;
   };
 
+  activity set_current_state() {
+    doc		"Set initial planning position to current one";
+    task	plan;
+
+    codel<start> mv_current_state_start(in state, out start)
+      yield ether;
+  };
+
   activity take_off(in double height) {
     doc		"Vertical take-off from current state";
     task	plan;
 
     local sequence<or_pose_estimator::state> path;
-    local or_pose_estimator::state start;
 
-    codel<start> mv_current_state_start(in state, out start)
-      yield plan;
-    codel<plan> mv_take_off_plan(in planner, in start, in height, out path)
+    codel<start> mv_take_off_plan(in planner, inout start, in height, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
       yield pause::exec, wait;
@@ -125,12 +131,9 @@ component maneuver {
     task	plan;
 
     local sequence<or_pose_estimator::state> path;
-    local or_pose_estimator::state start;
 
-    codel<start> mv_current_state_start(in state, out start)
-      yield plan;
-    codel<plan> mv_goto_plan(in planner, in start,
-                             in x, in y, in z, in yaw, out path)
+    codel<start> mv_goto_plan(in planner, inout start,
+                              in x, in y, in z, in yaw, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
       yield pause::exec, wait;
@@ -151,15 +154,12 @@ component maneuver {
     task	plan;
 
     local sequence<or_pose_estimator::state> path;
-    local or_pose_estimator::state start;
 
-    codel<start> mv_waypoint_start(in state, in trajectory, out start)
-      yield plan;
-    codel<plan> mv_waypoint_plan(in planner, in start,
-                                 in x, in y, in z, in yaw,
-                                 in vx, in vy, in vz, in wz,
-                                 in ax, in ay, in az,
-                                 out path)
+    codel<start> mv_waypoint_plan(in planner, inout start,
+                                  in x, in y, in z, in yaw,
+                                  in vx, in vy, in vz, in wz,
+                                  in ax, in ay, in az,
+                                  out path)
       yield exec;
     codel<exec> mv_waypoint_add(in planner, in path, inout trajectory)
       yield ether;

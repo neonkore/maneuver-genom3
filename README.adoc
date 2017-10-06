@@ -257,6 +257,21 @@ a|.Outputs
 
 '''
 
+[[set_current_state]]
+=== set_current_state (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * In task `<<plan>>`
+  * Reads port `<<state>>`
+|===
+
+Set initial planning position to current one
+
+'''
+
 [[take_off]]
 === take_off (activity)
 

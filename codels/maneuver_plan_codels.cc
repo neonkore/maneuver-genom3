@@ -52,6 +52,13 @@ mv_plan_start(maneuver_ids *ids, const genom_context self)
   ids->planner->robot.addDof(
     kdtp::Dof(-3*M_PI, 3*M_PI, wmax, 10*wmax, 100*wmax, 100*wmax, true));
 
+  ids->start.pos._present = false;
+  ids->start.pos_cov._present = false;
+  ids->start.vel._present = false;
+  ids->start.vel_cov._present = false;
+  ids->start.acc._present = false;
+  ids->start.acc_cov._present = false;
+
   /* init logging */
   ids->log = new maneuver_log_s;
   if (!ids->log) abort();
@@ -78,13 +85,12 @@ mv_plan_stop(maneuver_ids *ids, const genom_context self)
 }
 
 
-/* --- Activity take_off ------------------------------------------------ */
+/* --- Activity set_current_state --------------------------------------- */
 
-/** Codel mv_current_state_start of activity take_off.
+/** Codel mv_current_state_start of activity set_current_state.
  *
  * Triggered by maneuver_start.
- * Yields to maneuver_plan.
- * Throws maneuver_e_nostate.
+ * Yields to maneuver_ether.
  */
 genom_event
 mv_current_state_start(const maneuver_state *state,
@@ -100,24 +106,29 @@ mv_current_state_start(const maneuver_state *state,
   start->vel._present = false;
   start->acc._present = false;
 
-  return maneuver_plan;
+  return maneuver_ether;
 }
+
+
+/* --- Activity take_off ------------------------------------------------ */
 
 /** Codel mv_take_off_plan of activity take_off.
  *
- * Triggered by maneuver_plan.
+ * Triggered by maneuver_start.
  * Yields to maneuver_exec.
  * Throws maneuver_e_nostate.
  */
 genom_event
 mv_take_off_plan(const maneuver_planner_s *planner,
-                 const or_pose_estimator_state *start, double height,
+                 or_pose_estimator_state *start, double height,
                  sequence_or_pose_estimator_state *path,
                  const genom_context self)
 {
   kdtp::State from(planner->robot);
   kdtp::State to(planner->robot);
   genom_event e;
+
+  if (!start->pos._present) return maneuver_e_nostate(self);
 
   const or_t3d_pos *p = &start->pos._value;
   from.position()[0] = p->x;
@@ -146,6 +157,7 @@ mv_take_off_plan(const maneuver_planner_s *planner,
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
+  *start = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
@@ -206,7 +218,7 @@ mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
 
 /* --- Activity goto ---------------------------------------------------- */
 
-/** Codel mv_current_state_start of activity goto.
+/** Codel mv_goto_plan of activity goto.
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_plan.
@@ -223,7 +235,7 @@ mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
  */
 genom_event
 mv_goto_plan(const maneuver_planner_s *planner,
-             const or_pose_estimator_state *start, double x, double y,
+             or_pose_estimator_state *start, double x, double y,
              double z, double yaw,
              sequence_or_pose_estimator_state *path,
              const genom_context self)
@@ -231,6 +243,8 @@ mv_goto_plan(const maneuver_planner_s *planner,
   kdtp::State from(planner->robot);
   kdtp::State to(planner->robot);
   genom_event e;
+
+  if (!start->pos._present) return maneuver_e_nostate(self);
 
   const or_t3d_pos *p = &start->pos._value;
   from.position()[0] = p->x;
@@ -261,6 +275,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
+  *start = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
@@ -294,43 +309,25 @@ mv_goto_plan(const maneuver_planner_s *planner,
 
 /* --- Activity waypoint ------------------------------------------------ */
 
-/** Codel mv_waypoint_start of activity waypoint.
- *
- * Triggered by maneuver_start.
- * Yields to maneuver_plan.
- * Throws maneuver_e_nostate.
- */
-genom_event
-mv_waypoint_start(const maneuver_state *state,
-                  const maneuver_ids_trajectory_s *trajectory,
-                  or_pose_estimator_state *start,
-                  const genom_context self)
-{
-  if (trajectory->t._length > 0) {
-    *start = trajectory->t._buffer[trajectory->t._length - 1];
-    return maneuver_plan;
-  }
-
-  return mv_current_state_start(state, start, self);
-}
-
 /** Codel mv_waypoint_plan of activity waypoint.
  *
- * Triggered by maneuver_plan.
+ * Triggered by maneuver_start.
  * Yields to maneuver_exec.
  * Throws maneuver_e_nostate.
  */
 genom_event
 mv_waypoint_plan(const maneuver_planner_s *planner,
-                 const or_pose_estimator_state *start, double x,
-                 double y, double z, double yaw, double vx, double vy,
-                 double vz, double wz, double ax, double ay, double az,
+                 or_pose_estimator_state *start, double x, double y,
+                 double z, double yaw, double vx, double vy, double vz,
+                 double wz, double ax, double ay, double az,
                  sequence_or_pose_estimator_state *path,
                  const genom_context self)
 {
   kdtp::State from(planner->robot);
   kdtp::State to(planner->robot);
   genom_event e;
+
+  if (!start->pos._present) return maneuver_e_nostate(self);
 
   const or_t3d_pos *p = &start->pos._value;
   from.position()[0] = p->x;
@@ -370,6 +367,7 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
+  *start = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
