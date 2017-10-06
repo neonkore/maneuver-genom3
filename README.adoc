@@ -22,7 +22,7 @@
 
 = maneuver component
 openrobots@laas.fr
-1.1
+1.2
 :toc: left
 
 // fix default asciidoctor stylesheet issue #2407 and add hr clear rule
