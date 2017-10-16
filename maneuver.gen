@@ -106,13 +106,13 @@ component maneuver {
       yield ether;
   };
 
-  activity take_off(in double height) {
+  activity take_off(in double height, in double duration) {
     doc		"Vertical take-off from current state";
     task	plan;
 
     local sequence<or_pose_estimator::state> path;
 
-    codel<start> mv_take_off_plan(in planner, inout start, in height, out path)
+    codel<start> mv_take_off_plan(in planner, inout start, in height, in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
       yield pause::exec, wait;

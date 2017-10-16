@@ -121,6 +121,7 @@ mv_current_state_start(const maneuver_state *state,
 genom_event
 mv_take_off_plan(const maneuver_planner_s *planner,
                  or_pose_estimator_state *start, double height,
+                 double duration,
                  sequence_or_pose_estimator_state *path,
                  const genom_context self)
 {
@@ -154,6 +155,9 @@ mv_take_off_plan(const maneuver_planner_s *planner,
   to.position()[2] = height;
 
   kdtp::LocalPath lpath(planner->robot, from, to);
+  if (duration != 0)
+    lpath.setDuration(duration);
+
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
