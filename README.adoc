@@ -281,6 +281,8 @@ a|.Inputs
 [disc]
  * `double` `height`
 
+ * `double` `duration`
+
 a|.Throws
 [disc]
  * `exception ::maneuver::e_nostate`
@@ -311,6 +313,8 @@ a|.Inputs
  * `double` `z`
 
  * `double` `yaw`
+
+ * `double` `duration`
 
 a|.Throws
 [disc]
@@ -356,6 +360,8 @@ a|.Inputs
  * `double` `ay`
 
  * `double` `az`
+
+ * `double` `duration`
 
 a|.Throws
 [disc]
