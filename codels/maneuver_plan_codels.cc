@@ -240,7 +240,7 @@ mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
 genom_event
 mv_goto_plan(const maneuver_planner_s *planner,
              or_pose_estimator_state *start, double x, double y,
-             double z, double yaw,
+             double z, double yaw, double duration,
              sequence_or_pose_estimator_state *path,
              const genom_context self)
 {
@@ -276,6 +276,9 @@ mv_goto_plan(const maneuver_planner_s *planner,
   to.position()[3] = yaw;
 
   kdtp::LocalPath lpath(planner->robot, from, to);
+  if (duration != 0)
+    lpath.setDuration(duration);
+
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
@@ -324,6 +327,7 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
                  or_pose_estimator_state *start, double x, double y,
                  double z, double yaw, double vx, double vy, double vz,
                  double wz, double ax, double ay, double az,
+                 double duration,
                  sequence_or_pose_estimator_state *path,
                  const genom_context self)
 {
@@ -368,6 +372,9 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
   to.acceleration()[2] = az;
 
   kdtp::LocalPath lpath(planner->robot, from, to);
+  if (duration != 0)
+    lpath.setDuration(duration);
+
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 

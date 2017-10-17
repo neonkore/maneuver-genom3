@@ -126,14 +126,14 @@ component maneuver {
     interrupt take_off, goto;
   };
 
-  activity goto(in double x, in double y, in double z, in double yaw) {
+  activity goto(in double x, in double y, in double z, in double yaw, in double duration) {
     doc		"Reach a given position from current state";
     task	plan;
 
     local sequence<or_pose_estimator::state> path;
 
     codel<start> mv_goto_plan(in planner, inout start,
-                              in x, in y, in z, in yaw, out path)
+                              in x, in y, in z, in yaw, in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
       yield pause::exec, wait;
@@ -149,7 +149,7 @@ component maneuver {
 
   activity waypoint(in double x, in double y, in double z, in double yaw,
                     in double vx, in double vy, in double vz, in double wz,
-                    in double ax, in double ay, in double az) {
+                    in double ax, in double ay, in double az, in double duration) {
     doc		"Push a given position to reach after last one";
     task	plan;
 
@@ -159,6 +159,7 @@ component maneuver {
                                   in x, in y, in z, in yaw,
                                   in vx, in vy, in vz, in wz,
                                   in ax, in ay, in az,
+                                  in duration,
                                   out path)
       yield exec;
     codel<exec> mv_waypoint_add(in planner, in path, inout trajectory)
