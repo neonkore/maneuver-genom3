@@ -154,9 +154,7 @@ mv_take_off_plan(const maneuver_planner_s *planner,
   to.position() = from.position();
   to.position()[2] = height;
 
-  kdtp::LocalPath lpath(planner->robot, from, to);
-  if (duration != 0)
-    lpath.setDuration(duration);
+  kdtp::LocalPath lpath(planner->robot, from, to, duration);
 
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
@@ -275,9 +273,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
   to.position()[2] = z;
   to.position()[3] = yaw;
 
-  kdtp::LocalPath lpath(planner->robot, from, to);
-  if (duration != 0)
-    lpath.setDuration(duration);
+  kdtp::LocalPath lpath(planner->robot, from, to, duration);
 
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
@@ -371,9 +367,7 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
   to.acceleration()[1] = ay;
   to.acceleration()[2] = az;
 
-  kdtp::LocalPath lpath(planner->robot, from, to);
-  if (duration != 0)
-    lpath.setDuration(duration);
+  kdtp::LocalPath lpath(planner->robot, from, to, duration);
 
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
