@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 LAAS/CNRS
+ * Copyright (c) 2016-2018 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution and use  in source  and binary  forms,  with or without
@@ -211,9 +211,17 @@ mv_plan_exec_wait(const maneuver_ids_trajectory_s *trajectory,
  */
 genom_event
 mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
+                  or_pose_estimator_state *start,
                   const genom_context self)
 {
-  trajectory->t._length = 0;
+  /* (re)start from current state if a trajectory is being executed */
+  if (trajectory->t._length > 0) {
+    *start = trajectory->t._buffer[trajectory->i];
+    start->vel._present = false;
+    start->acc._present = false;
+    trajectory->t._length = 0;
+  }
+
   return maneuver_ether;
 }
 
