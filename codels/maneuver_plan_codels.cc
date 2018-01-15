@@ -25,6 +25,9 @@
 
 /* --- Task plan -------------------------------------------------------- */
 
+static genom_event	mv_check_duration(const kdtp::LocalPath &p,
+                                          const double duration,
+                                          const genom_context self);
 static genom_event	mv_sample_path(const kdtp::LocalPath &p,
                                        sequence_or_pose_estimator_state *path,
                                        genom_context self);
@@ -116,7 +119,7 @@ mv_current_state_start(const maneuver_state *state,
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_exec.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
 mv_take_off_plan(const maneuver_planner_s *planner,
@@ -156,6 +159,8 @@ mv_take_off_plan(const maneuver_planner_s *planner,
 
   kdtp::LocalPath lpath(planner->robot, from, to, duration);
 
+  e = mv_check_duration(lpath, duration, self);
+  if (e) return e;
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
@@ -167,7 +172,7 @@ mv_take_off_plan(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_exec.
  * Yields to maneuver_pause_exec, maneuver_wait.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
 mv_plan_exec(const maneuver_planner_s *planner,
@@ -193,7 +198,7 @@ mv_plan_exec(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_wait.
  * Yields to maneuver_pause_wait, maneuver_ether.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
 mv_plan_exec_wait(const maneuver_ids_trajectory_s *trajectory,
@@ -207,7 +212,7 @@ mv_plan_exec_wait(const maneuver_ids_trajectory_s *trajectory,
  *
  * Triggered by maneuver_stop.
  * Yields to maneuver_ether.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
 mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
@@ -241,7 +246,7 @@ mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
  *
  * Triggered by maneuver_plan.
  * Yields to maneuver_exec.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
 mv_goto_plan(const maneuver_planner_s *planner,
@@ -283,6 +288,8 @@ mv_goto_plan(const maneuver_planner_s *planner,
 
   kdtp::LocalPath lpath(planner->robot, from, to, duration);
 
+  e = mv_check_duration(lpath, duration, self);
+  if (e) return e;
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
@@ -294,7 +301,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_exec.
  * Yields to maneuver_pause_exec, maneuver_wait.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 /* already defined in service take_off */
 
@@ -303,7 +310,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_wait.
  * Yields to maneuver_pause_wait, maneuver_ether.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 /* already defined in service take_off */
 
@@ -312,7 +319,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_stop.
  * Yields to maneuver_ether.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 /* already defined in service take_off */
 
@@ -324,7 +331,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_exec.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
 mv_waypoint_plan(const maneuver_planner_s *planner,
@@ -377,6 +384,8 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
 
   kdtp::LocalPath lpath(planner->robot, from, to, duration);
 
+  e = mv_check_duration(lpath, duration, self);
+  if (e) return e;
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
@@ -388,7 +397,7 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_exec.
  * Yields to maneuver_ether.
- * Throws maneuver_e_nostate.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
 mv_waypoint_add(const maneuver_planner_s *planner,
@@ -423,6 +432,23 @@ mv_waypoint_add(const maneuver_planner_s *planner,
 
 /* --- local functions ----------------------------------------------------- */
 
+/*
+ * consider limits
+ */
+static genom_event
+mv_check_duration(const kdtp::LocalPath &p, const double duration,
+                  const genom_context self)
+{
+  /* consider limits */
+  if (duration > 0. && p.duration() > duration)
+    return maneuver_e_limits(self);
+
+  return genom_ok;
+}
+
+/*
+ * sample local path according to the exec task period
+ */
 static genom_event
 mv_sample_path(const kdtp::LocalPath &p,
                sequence_or_pose_estimator_state *path, genom_context self)

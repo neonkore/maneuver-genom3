@@ -287,6 +287,8 @@ a|.Throws
 [disc]
  * `exception ::maneuver::e_nostate`
 
+ * `exception ::maneuver::e_limits`
+
 a|.Context
 [disc]
   * In task `<<plan>>`
@@ -319,6 +321,8 @@ a|.Inputs
 a|.Throws
 [disc]
  * `exception ::maneuver::e_nostate`
+
+ * `exception ::maneuver::e_limits`
 
 a|.Context
 [disc]
@@ -366,6 +370,8 @@ a|.Inputs
 a|.Throws
 [disc]
  * `exception ::maneuver::e_nostate`
+
+ * `exception ::maneuver::e_limits`
 
 a|.Context
 [disc]
