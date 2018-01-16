@@ -54,7 +54,7 @@ xx
 struct maneuver_log_s {
   FILE *f;
 
-# define mv_logfmt	" %e "
+# define mv_logfmt	" %g "
 # define mv_log_header_fmt                                              \
   "ts x y z yaw vx vy vz wz ax ay az"
 # define mv_log_fmt                                                     \
@@ -62,6 +62,11 @@ struct maneuver_log_s {
   mv_logfmt mv_logfmt mv_logfmt mv_logfmt                               \
   mv_logfmt mv_logfmt mv_logfmt mv_logfmt                               \
   mv_logfmt mv_logfmt mv_logfmt
+# define mv_replay_fmt                                                  \
+  "%d.%09d "                                                            \
+  "%lf %lf %lf %lf"                                                     \
+  "%lf %lf %lf %lf"                                                     \
+  "%lf %lf %lf"
 };
 
 #endif /* H_MANEUVER_CODELS */

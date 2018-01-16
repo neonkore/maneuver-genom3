@@ -295,6 +295,7 @@ a|.Context
   * Reads port `<<state>>`
   * Interrupts `<<take_off>>`
   * Interrupts `<<goto>>`
+  * Interrupts `<<replay>>`
 |===
 
 Vertical take-off from current state
@@ -330,6 +331,7 @@ a|.Context
   * Reads port `<<state>>`
   * Interrupts `<<take_off>>`
   * Interrupts `<<goto>>`
+  * Interrupts `<<replay>>`
 |===
 
 Reach a given position from current state
@@ -395,6 +397,37 @@ a|.Context
 |===
 
 Wait until last waypoint/goto point is reached
+
+'''
+
+[[replay]]
+=== replay (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `string<128>` `filename` (default `"maneuver.log"`) Log file name
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_nostate`
+
+ * `exception ::maneuver::e_limits`
+
+ * `exception ::maneuver::e_sys`
+ ** `short` `code`
+ ** `string<128>` `what`
+
+a|.Context
+[disc]
+  * In task `<<plan>>`
+  * Interrupts `<<take_off>>`
+  * Interrupts `<<goto>>`
+  * Interrupts `<<replay>>`
+|===
+
+Replay a trajectory log file
 
 '''
 

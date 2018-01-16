@@ -17,6 +17,7 @@
 #include "acmaneuver.h"
 
 #include <cmath>
+#include <cstdio>
 #include <iostream>
 
 #include "maneuver_c_types.h"
@@ -185,7 +186,7 @@ mv_plan_exec(const maneuver_planner_s *planner,
   if (trajectory->t._length > 0) return maneuver_pause_exec;
 
   if (genom_sequence_reserve(&trajectory->t, path->_length))
-    return maneuver_e_sys(NULL, self);
+    return mv_e_sys_error(NULL, self);
 
   for(i = 0; i < path->_length; i++)
     trajectory->t._buffer[i] = path->_buffer[i];
@@ -430,6 +431,199 @@ mv_waypoint_add(const maneuver_planner_s *planner,
 
 
 
+/* --- Activity replay -------------------------------------------------- */
+
+/** Codel mv_replay_read of activity replay.
+ *
+ * Triggered by maneuver_start.
+ * Yields to maneuver_exec.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
+ */
+genom_event
+mv_replay_read(const maneuver_planner_s *planner,
+               or_pose_estimator_state *start,
+               const char filename[128],
+               sequence_or_pose_estimator_state *path,
+               const genom_context self)
+{
+  sequence_or_pose_estimator_state interp;
+  kdtp::State from(planner->robot);
+  kdtp::State to(planner->robot);
+  or_pose_estimator_state s;
+  char line[1024];
+  double now, dt;
+  genom_event e;
+  double yaw;
+  size_t i;
+  char *l;
+  FILE *f;
+  int n;
+
+  f = fopen(filename, "r");
+  if (!f) return mv_e_sys_error(filename, self);
+
+  path->_length = 0;
+
+  interp._maximum = 0;
+  interp._length = 0;
+  interp._buffer = NULL;
+  interp._release = NULL;
+
+  s.intrinsic = false;
+
+  s.pos._present = true;
+  s.pos._value.qx = 0.;
+  s.pos._value.qy = 0.;
+  s.pos_cov._present = false;
+
+  s.vel._present = true;
+  s.vel._value.wx = 0.;
+  s.vel._value.wy = 0.;
+  s.vel_cov._present = false;
+
+  s.acc._present = true;
+  s.acc_cov._present = false;
+
+  do {
+    /* get next line */
+    l = fgets(line, sizeof(line), f);
+    if (!l) {
+      n = errno;
+      if (feof(f)) break;
+
+      fclose(f);
+      errno = n;
+      return mv_e_sys_error(filename, self);
+    }
+
+    n = sscanf(line, mv_replay_fmt,
+               &s.ts.sec, &s.ts.nsec,
+               &s.pos._value.x, &s.pos._value.y, &s.pos._value.z, &yaw,
+               &s.vel._value.vx, &s.vel._value.vy, &s.vel._value.vz,
+               &s.vel._value.wz,
+               &s.acc._value.ax, &s.acc._value.ay, &s.acc._value.az);
+    if (n != 13) continue;
+
+    s.pos._value.qw = std::cos(yaw/2.);
+    s.pos._value.qz = std::sin(yaw/2.);
+
+    /* resize path if needed */
+    if (path->_length >= path->_maximum)
+      if (genom_sequence_reserve(path, path->_length + 256))
+        return maneuver_e_sys(NULL, self);
+
+    /* output first sample directly */
+    if (!path->_length) {
+      path->_buffer[path->_length++] = s;
+      now = s.ts.sec + s.ts.nsec * 1e-9 + maneuver_control_period_ms / 1000.;
+      continue;
+    }
+
+    /* time offset of current sample */
+    dt = s.ts.sec + s.ts.nsec * 1e-9 - now;
+
+    /* skip too high frequency samples */
+    if (dt < - maneuver_control_period_ms / 1000. / 2.) continue;
+
+    /* output sample at right frequency directly */
+    if (dt < maneuver_control_period_ms / 1000. / 2.) {
+      path->_buffer[path->_length++] = s;
+      now += maneuver_control_period_ms / 1000.;
+      continue;
+    }
+
+    /* interpolate sample at too low frequency */
+    const or_t3d_pos *p0 = &path->_buffer[path->_length - 1].pos._value;
+    from.position()[0] = p0->x;
+    from.position()[1] = p0->y;
+    from.position()[2] = p0->z;
+    from.position()[3] = 2 * atan2(p0->qz, p0->qw);
+
+    const or_t3d_vel *v0 = &path->_buffer[path->_length - 1].vel._value;
+    from.velocity()[0] = v0->vx;
+    from.velocity()[1] = v0->vy;
+    from.velocity()[2] = v0->vz;
+    from.velocity()[3] = v0->wz;
+
+    const or_t3d_acc *a0 = &path->_buffer[path->_length - 1].acc._value;
+    from.acceleration()[0] = a0->ax;
+    from.acceleration()[1] = a0->ay;
+    from.acceleration()[2] = a0->az;
+
+    const or_t3d_pos *p1 = &s.pos._value;
+    to.position()[0] = p1->x;
+    to.position()[1] = p1->y;
+    to.position()[2] = p1->z;
+    to.position()[3] = 2 * atan2(p1->qz, p1->qw);
+
+    const or_t3d_vel *v1 = &s.vel._value;
+    to.velocity()[0] = v1->vx;
+    to.velocity()[1] = v1->vy;
+    to.velocity()[2] = v1->vz;
+    to.velocity()[3] = v1->wz;
+
+    const or_t3d_acc *a1 = &s.acc._value;
+    to.acceleration()[0] = a1->ax;
+    to.acceleration()[1] = a1->ay;
+    to.acceleration()[2] = a1->az;
+
+    kdtp::LocalPath lpath(planner->robot, from, to, dt);
+
+    e = mv_sample_path(lpath, &interp, self);
+    if (e) return e;
+
+    if (path->_length + interp._length >= path->_maximum)
+      if (genom_sequence_reserve(path, path->_length + interp._length))
+        return maneuver_e_sys(NULL, self);
+    for(i = 0; i < interp._length; i++) {
+      dt = i * maneuver_control_period_ms / 1000.;
+      interp._buffer[i].ts.sec = floor(dt + now);
+      interp._buffer[i].ts.nsec = 1e9*(dt + now - interp._buffer[i].ts.sec);
+
+      path->_buffer[path->_length++] = interp._buffer[i];
+    }
+
+    now += (1 + interp._length) * maneuver_control_period_ms / 1000.;
+  } while(!feof(f));
+
+  fclose(f);
+
+  if (!path->_length) {
+    errno = ENOMSG;
+    return mv_e_sys_error(filename, self);
+  }
+
+  *start = path->_buffer[path->_length-1];
+  return maneuver_exec;
+}
+
+/** Codel mv_plan_exec of activity replay.
+ *
+ * Triggered by maneuver_exec.
+ * Yields to maneuver_pause_exec, maneuver_wait.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
+ */
+/* already defined in service take_off */
+
+
+/** Codel mv_plan_exec_wait of activity replay.
+ *
+ * Triggered by maneuver_wait.
+ * Yields to maneuver_pause_wait, maneuver_ether.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
+ */
+/* already defined in service take_off */
+
+
+/** Codel mv_plan_exec_stop of activity replay.
+ *
+ * Triggered by maneuver_stop.
+ * Yields to maneuver_ether.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
+ */
+/* already defined in service take_off */
+
+
 /* --- local functions ----------------------------------------------------- */
 
 /*
@@ -455,13 +649,18 @@ mv_sample_path(const kdtp::LocalPath &p,
 {
   std::vector<std::vector<double> > q;
   or_pose_estimator_state s;
+  double t;
   size_t i;
 
   i = 1 + 1000 * p.duration()/maneuver_control_period_ms;
   if (genom_sequence_reserve(path, i)) return maneuver_e_sys(NULL, self);
 
   for(i = 0; i < path->_maximum; i++) {
-    q = p.getAllAt(i * maneuver_control_period_ms/1000.);
+    t = i * maneuver_control_period_ms/1000.;
+    q = p.getAllAt(t);
+
+    s.ts.sec = floor(t);
+    s.ts.nsec = 1e9*(t - s.ts.sec);
 
     s.intrinsic = false;
 

@@ -125,7 +125,7 @@ component maneuver {
       yield ether;
 
     throw e_nostate, e_limits;
-    interrupt take_off, goto;
+    interrupt take_off, goto, replay;
   };
 
   activity goto(in double x, in double y, in double z, in double yaw,
@@ -147,7 +147,7 @@ component maneuver {
       yield ether;
 
     throw e_nostate, e_limits;
-    interrupt take_off, goto;
+    interrupt take_off, goto, replay;
   };
 
   activity waypoint(in double x, in double y, in double z, in double yaw,
@@ -179,6 +179,28 @@ component maneuver {
 
     codel<start, wait> mv_plan_exec_wait(in trajectory)
       yield pause::wait, ether;
+  };
+
+  activity
+  replay(in string<128> filename = "maneuver.log": "Log file name")
+  {
+    doc "Replay a trajectory log file";
+    task plan;
+
+    local sequence<or_pose_estimator::state> path;
+
+    codel<start> mv_replay_read(in planner, inout start, in filename, out path)
+      yield exec;
+    codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
+      yield pause::exec, wait;
+    codel<wait> mv_plan_exec_wait(in trajectory)
+      yield pause::wait, ether;
+
+    codel<stop> mv_plan_exec_stop(inout trajectory, out start)
+      yield ether;
+
+    throw e_nostate, e_limits, e_sys;
+    interrupt take_off, goto, replay;
   };
 
 
