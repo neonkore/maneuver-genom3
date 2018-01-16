@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 LAAS/CNRS
+ * Copyright (c) 2016,2018 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution and use  in source  and binary  forms,  with or without
@@ -18,6 +18,9 @@
 #ifndef H_MANEUVER_CODELS
 #define H_MANEUVER_CODELS
 
+#include <cstdio>
+#include <cstring>
+
 #include "libkdtp.h"
 
 #include "maneuver_c_types.h"
@@ -32,16 +35,19 @@ static inline genom_event
 mv_e_sys_error(const char *s, genom_context self)
 {
   maneuver_e_sys_detail d;
-  size_t l = 0;
+  char buf[64], *p;
 
   d.code = errno;
-  if (s) {
-    strncpy(d.what, s, sizeof(d.what) - 3);
-    l = strlen(s);
-    strcpy(d.what + l, ": ");
-    l += 2;
-  }
-  if (strerror_r(d.code, d.what + l, sizeof(d.what) - l)) /* ignore error*/;
+#ifdef STRERROR_R_CHAR_P
+  /* glibc managed to mess up with this function */
+  p = strerror_r(d.code, buf, sizeof(buf));
+#else
+xx
+  strerror_r(d.code, buf, sizeof(buf));
+  p = buf;
+#endif
+  snprintf(d.what, sizeof(d.what), "%s%s%s", s ? s : "", s ? ": " : "", p);
+
   return maneuver_e_sys(&d, self);
 }
 

@@ -30,6 +30,10 @@ LT_INIT
 AC_PROG_CC
 AC_PROG_CXX
 
+dnl glibc messed up this funtion
+AC_LANG_PUSH([C++])
+AC_FUNC_STRERROR_R
+AC_LANG_POP
 
 dnl External packages
 PKG_CHECK_MODULES(requires, [
