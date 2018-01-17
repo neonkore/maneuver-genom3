@@ -44,7 +44,6 @@ mv_e_sys_error(const char *s, genom_context self)
   /* glibc managed to mess up with this function */
   p = strerror_r(d.code, buf, sizeof(buf));
 #else
-xx
   strerror_r(d.code, buf, sizeof(buf));
   p = buf;
 #endif
