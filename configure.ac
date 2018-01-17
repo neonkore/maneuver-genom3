@@ -30,6 +30,8 @@ LT_INIT
 AC_PROG_CC
 AC_PROG_CXX
 
+dnl Features
+AC_SEARCH_LIBS([aio_write], [rt],, AC_MSG_ERROR([aio_write() not found], 2))
 dnl glibc messed up this funtion
 AC_LANG_PUSH([C++])
 AC_FUNC_STRERROR_R

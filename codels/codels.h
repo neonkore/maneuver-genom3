@@ -18,6 +18,8 @@
 #ifndef H_MANEUVER_CODELS
 #define H_MANEUVER_CODELS
 
+#include <aio.h>
+
 #include <cstdio>
 #include <cstring>
 
@@ -52,7 +54,11 @@ xx
 }
 
 struct maneuver_log_s {
-  FILE *f;
+  struct aiocb req;
+  char buffer[4096];
+  bool pending, skipped;
+  uint32_t decimation;
+  size_t missed, total;
 
 # define mv_logfmt	" %g "
 # define mv_log_header_fmt                                              \

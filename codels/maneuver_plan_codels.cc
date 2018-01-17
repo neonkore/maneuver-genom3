@@ -66,7 +66,19 @@ mv_plan_start(maneuver_ids *ids, const genom_context self)
   /* init logging */
   ids->log = new maneuver_log_s;
   if (!ids->log) abort();
-  ids->log->f = NULL;
+
+  ids->log->req.aio_fildes = -1;
+  ids->log->req.aio_offset = 0;
+  ids->log->req.aio_buf = ids->log->buffer;
+  ids->log->req.aio_nbytes = 0;
+  ids->log->req.aio_reqprio = 0;
+  ids->log->req.aio_sigevent.sigev_notify = SIGEV_NONE;
+  ids->log->req.aio_lio_opcode = LIO_NOP;
+  ids->log->pending = false;
+  ids->log->skipped = false;
+  ids->log->decimation = 1;
+  ids->log->missed = 0;
+  ids->log->total = 0;
 
   return maneuver_ether;
 }

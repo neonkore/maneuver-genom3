@@ -213,7 +213,7 @@ component maneuver {
       yield wait;
     codel<wait> mv_exec_wait(in state, in trajectory)
       yield pause::wait, main;
-    codel<main> mv_exec_main(in state, inout trajectory, out desired, in log)
+    codel<main> mv_exec_main(in state, inout trajectory, out desired, inout log)
       yield wait, pause::main, start;
 
     codel<stop> mv_exec_stop() yield ether;
@@ -229,10 +229,11 @@ component maneuver {
 
   /* --- logging ----------------------------------------------------------- */
 
-  function log(in string<64> path = "/tmp/maneuver.log": "Log file name") {
+  function log(in string<64> path = "/tmp/maneuver.log": "Log file name",
+               in unsigned long decimation = 1: "Reduced logging frequency") {
     doc		"Log state";
 
-    codel mv_log(in path, inout log);
+    codel mv_log(in path, in decimation, inout log);
 
     throw e_sys;
   };
@@ -241,5 +242,12 @@ component maneuver {
     doc		"Stop logging";
 
     codel mv_log_stop(out log);
+  };
+
+  function log_info(out unsigned long miss = :"Missed log entries",
+                    out unsigned long total = :"Total log entries") {
+    doc		"Show missed log entries";
+
+    codel mv_log_info(in log, out miss, out total);
   };
 };

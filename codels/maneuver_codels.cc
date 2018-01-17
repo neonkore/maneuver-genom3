@@ -16,6 +16,9 @@
  */
 #include "acmaneuver.h"
 
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <cstdio>
 
 #include "maneuver_c_types.h"
@@ -163,17 +166,31 @@ mv_get_limits(maneuver_planner_s **planner, double *xmin, double *xmax,
  * Throws maneuver_e_sys.
  */
 genom_event
-mv_log(const char path[64], maneuver_log_s **log,
+mv_log(const char path[64], uint32_t decimation, maneuver_log_s **log,
        const genom_context self)
 {
-  FILE *f;
+  int fd;
 
-  f = fopen(path, "w");
-  if (!f) return mv_e_sys_error(path, self);
-  fprintf(f, mv_log_header_fmt "\n");
+  fd = open(path, O_WRONLY|O_APPEND|O_CREAT|O_TRUNC, 0666);
+  if (fd < 0) return mv_e_sys_error(path, self);
 
-  if ((*log)->f) fclose((*log)->f);
-  (*log)->f = f;
+  if (write(fd, mv_log_header_fmt "\n", sizeof(mv_log_header_fmt)) < 0)
+    return mv_e_sys_error(path, self);
+
+  if ((*log)->req.aio_fildes >= 0) {
+    close((*log)->req.aio_fildes);
+
+    if ((*log)->pending)
+      while (aio_error(&(*log)->req) == EINPROGRESS)
+        /* empty body */;
+  }
+  (*log)->req.aio_fildes = fd;
+  (*log)->pending = false;
+  (*log)->skipped = false;
+  (*log)->decimation = decimation < 1 ? 1 : decimation;
+  (*log)->missed = 0;
+  (*log)->total = 0;
+
   return genom_ok;
 }
 
@@ -187,8 +204,29 @@ mv_log(const char path[64], maneuver_log_s **log,
 genom_event
 mv_log_stop(maneuver_log_s **log, const genom_context self)
 {
-  if ((*log)->f) fclose((*log)->f);
-  (*log)->f = NULL;
+  if (*log && (*log)->req.aio_fildes >= 0)
+    close((*log)->req.aio_fildes);
+  (*log)->req.aio_fildes = -1;
+
+  return genom_ok;
+}
+
+
+/* --- Function log_info ------------------------------------------------ */
+
+/** Codel mv_log_info of function log_info.
+ *
+ * Returns genom_ok.
+ */
+genom_event
+mv_log_info(const maneuver_log_s *log, uint32_t *miss, uint32_t *total,
+            const genom_context self)
+{
+  *miss = *total = 0;
+  if (log) {
+    *miss = log->missed;
+    *total = log->total;
+  }
 
   return genom_ok;
 }
