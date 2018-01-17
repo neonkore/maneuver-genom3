@@ -10,6 +10,6 @@ idldir=@datadir@/idl
 Name: maneuver-genom3
 Description: maneuver interface and codels library
 Version: @PACKAGE_VERSION@
-Requires: openrobots-idl >= 1.2, libkdtp
+Requires: openrobots-idl >= 1.2, libkdtp >= 1.1
 Cflags: -I${includedir} -I${idldir}
 Libs: -L${libdir} -lmaneuver_codels
