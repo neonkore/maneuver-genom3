@@ -48,15 +48,15 @@ mv_set_bounds(maneuver_planner_s **planner, double xmin, double xmax,
 }
 
 
-/* --- Function set_velocity -------------------------------------------- */
+/* --- Function set_velocity_limit -------------------------------------- */
 
-/** Codel mv_set_velocity of function set_velocity.
+/** Codel mv_set_velocity_limit of function set_velocity_limit.
  *
  * Returns genom_ok.
  */
 genom_event
-mv_set_velocity(maneuver_planner_s **planner, double v, double w,
-                const genom_context self)
+mv_set_velocity_limit(maneuver_planner_s **planner, double v, double w,
+                      const genom_context self)
 {
   (*planner)->robot.getDof(0).setVelocityMax(v);
   (*planner)->robot.getDof(1).setVelocityMax(v);
@@ -66,15 +66,15 @@ mv_set_velocity(maneuver_planner_s **planner, double v, double w,
 }
 
 
-/* --- Function set_acceleration ---------------------------------------- */
+/* --- Function set_acceleration_limit ---------------------------------- */
 
-/** Codel mv_set_acceleration of function set_acceleration.
+/** Codel mv_set_acceleration_limit of function set_acceleration_limit.
  *
  * Returns genom_ok.
  */
 genom_event
-mv_set_acceleration(maneuver_planner_s **planner, double a, double dw,
-                    const genom_context self)
+mv_set_acceleration_limit(maneuver_planner_s **planner, double a,
+                          double dw, const genom_context self)
 {
   (*planner)->robot.getDof(0).setAccelerationMax(a);
   (*planner)->robot.getDof(1).setAccelerationMax(a);
@@ -84,15 +84,15 @@ mv_set_acceleration(maneuver_planner_s **planner, double a, double dw,
 }
 
 
-/* --- Function set_jerk ------------------------------------------------ */
+/* --- Function set_jerk_limit ------------------------------------------ */
 
-/** Codel mv_set_jerk of function set_jerk.
+/** Codel mv_set_jerk_limit of function set_jerk_limit.
  *
  * Returns genom_ok.
  */
 genom_event
-mv_set_jerk(maneuver_planner_s **planner, double j, double ddw,
-            const genom_context self)
+mv_set_jerk_limit(maneuver_planner_s **planner, double j, double ddw,
+                  const genom_context self)
 {
   (*planner)->robot.getDof(0).setJerkMax(j);
   (*planner)->robot.getDof(1).setJerkMax(j);
@@ -102,15 +102,15 @@ mv_set_jerk(maneuver_planner_s **planner, double j, double ddw,
 }
 
 
-/* --- Function set_snap ------------------------------------------------ */
+/* --- Function set_snap_limit ------------------------------------------ */
 
-/** Codel mv_set_snap of function set_snap.
+/** Codel mv_set_snap_limit of function set_snap_limit.
  *
  * Returns genom_ok.
  */
 genom_event
-mv_set_snap(maneuver_planner_s **planner, double s, double dddw,
-            const genom_context self)
+mv_set_snap_limit(maneuver_planner_s **planner, double s, double dddw,
+                  const genom_context self)
 {
   (*planner)->robot.getDof(0).setSnapMax(s);
   (*planner)->robot.getDof(1).setSnapMax(s);

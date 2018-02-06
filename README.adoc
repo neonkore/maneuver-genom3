@@ -154,8 +154,8 @@ a|.Inputs
 
 '''
 
-[[set_velocity]]
-=== set_velocity (function)
+[[set_velocity_limit]]
+=== set_velocity_limit (function)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
@@ -169,8 +169,8 @@ a|.Inputs
 
 '''
 
-[[set_acceleration]]
-=== set_acceleration (function)
+[[set_acceleration_limit]]
+=== set_acceleration_limit (function)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
@@ -184,8 +184,8 @@ a|.Inputs
 
 '''
 
-[[set_jerk]]
-=== set_jerk (function)
+[[set_jerk_limit]]
+=== set_jerk_limit (function)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
@@ -199,8 +199,8 @@ a|.Inputs
 
 '''
 
-[[set_snap]]
-=== set_snap (function)
+[[set_snap_limit]]
+=== set_snap_limit (function)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
