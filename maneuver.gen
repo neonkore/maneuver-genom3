@@ -219,8 +219,8 @@ component maneuver {
     codel<stop> mv_exec_stop() yield ether;
   };
 
-  activity reset() {
-    doc		"Reset the current trajectory and set desired state to empty";
+  activity stop() {
+    doc		"Cancel any motion and set the desired state to empty";
     task	exec;
 
     codel<start> mv_exec_reset(inout trajectory, out desired) yield ether;

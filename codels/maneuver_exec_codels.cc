@@ -187,9 +187,9 @@ mv_exec_stop(const genom_context self)
 }
 
 
-/* --- Activity reset --------------------------------------------------- */
+/* --- Activity stop ---------------------------------------------------- */
 
-/** Codel mv_exec_reset of activity reset.
+/** Codel mv_exec_reset of activity stop.
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_ether.

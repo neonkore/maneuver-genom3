@@ -431,8 +431,8 @@ Replay a trajectory log file
 
 '''
 
-[[reset]]
-=== reset (activity)
+[[stop]]
+=== stop (activity)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
@@ -443,7 +443,7 @@ a|.Context
   * Updates port `<<desired>>`
 |===
 
-Reset the current trajectory and set desired state to empty
+Cancel any motion and set the desired state to empty
 
 '''
 
