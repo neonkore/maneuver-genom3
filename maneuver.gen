@@ -39,7 +39,8 @@ component maneuver {
   ids {
     planner_s planner;
 
-    or_pose_estimator::state start;
+    or_pose_estimator::state current;
+
     struct trajectory_s {
       sequence<or_pose_estimator::state> t;
       unsigned long i;
@@ -103,7 +104,7 @@ component maneuver {
     doc		"Set initial planning position to current one";
     task	plan;
 
-    codel<start> mv_current_state_start(in state, out start)
+    codel<start> mv_current_state_start(in state, out current)
       yield ether;
   };
 
@@ -113,7 +114,7 @@ component maneuver {
 
     local sequence<or_pose_estimator::state> path;
 
-    codel<start> mv_take_off_plan(in planner, inout start, in height,
+    codel<start> mv_take_off_plan(in planner, inout current, in height,
                                   in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
@@ -121,7 +122,7 @@ component maneuver {
     codel<wait> mv_plan_exec_wait(in trajectory)
       yield pause::wait, ether;
 
-    codel<stop> mv_plan_exec_stop(inout trajectory, out start)
+    codel<stop> mv_plan_exec_stop(inout trajectory, out current)
       yield ether;
 
     throw e_nostate, e_limits;
@@ -135,7 +136,7 @@ component maneuver {
 
     local sequence<or_pose_estimator::state> path;
 
-    codel<start> mv_goto_plan(in planner, inout start,
+    codel<start> mv_goto_plan(in planner, inout current,
                               in x, in y, in z, in yaw, in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
@@ -143,7 +144,7 @@ component maneuver {
     codel<wait> mv_plan_exec_wait(in trajectory)
       yield pause::wait, ether;
 
-    codel<stop> mv_plan_exec_stop(inout trajectory, out start)
+    codel<stop> mv_plan_exec_stop(inout trajectory, out current)
       yield ether;
 
     throw e_nostate, e_limits;
@@ -159,7 +160,7 @@ component maneuver {
 
     local sequence<or_pose_estimator::state> path;
 
-    codel<start> mv_waypoint_plan(in planner, inout start,
+    codel<start> mv_waypoint_plan(in planner, inout current,
                                   in x, in y, in z, in yaw,
                                   in vx, in vy, in vz, in wz,
                                   in ax, in ay, in az,
@@ -189,14 +190,15 @@ component maneuver {
 
     local sequence<or_pose_estimator::state> path;
 
-    codel<start> mv_replay_read(in planner, inout start, in filename, out path)
+    codel<start> mv_replay_read(in planner, inout current, in filename,
+                                out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, inout trajectory)
       yield pause::exec, wait;
     codel<wait> mv_plan_exec_wait(in trajectory)
       yield pause::wait, ether;
 
-    codel<stop> mv_plan_exec_stop(inout trajectory, out start)
+    codel<stop> mv_plan_exec_stop(inout trajectory, out current)
       yield ether;
 
     throw e_nostate, e_limits, e_sys;

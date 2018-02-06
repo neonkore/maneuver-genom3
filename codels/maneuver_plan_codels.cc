@@ -56,12 +56,12 @@ mv_plan_start(maneuver_ids *ids, const genom_context self)
   ids->planner->robot.addDof(
     kdtp::Dof(-3*M_PI, 3*M_PI, wmax, 10*wmax, 100*wmax, 100*wmax, true));
 
-  ids->start.pos._present = false;
-  ids->start.pos_cov._present = false;
-  ids->start.vel._present = false;
-  ids->start.vel_cov._present = false;
-  ids->start.acc._present = false;
-  ids->start.acc_cov._present = false;
+  ids->current.pos._present = false;
+  ids->current.pos_cov._present = false;
+  ids->current.vel._present = false;
+  ids->current.vel_cov._present = false;
+  ids->current.acc._present = false;
+  ids->current.acc_cov._present = false;
 
   /* init logging */
   ids->log = new maneuver_log_s;
@@ -110,17 +110,17 @@ mv_plan_stop(maneuver_ids *ids, const genom_context self)
  */
 genom_event
 mv_current_state_start(const maneuver_state *state,
-                       or_pose_estimator_state *start,
+                       or_pose_estimator_state *current,
                        const genom_context self)
 {
   if (state->read(self) != genom_ok) return maneuver_e_nostate(self);
   if (!state->data(self)->pos._present) return maneuver_e_nostate(self);
-  *start = *state->data(self);
+  *current = *state->data(self);
 
   /* disregard current velocity and acceleration - the residual noise
    * in those quantities generates weird trajectories */
-  start->vel._present = false;
-  start->acc._present = false;
+  current->vel._present = false;
+  current->acc._present = false;
 
   return maneuver_ether;
 }
@@ -136,7 +136,7 @@ mv_current_state_start(const maneuver_state *state,
  */
 genom_event
 mv_take_off_plan(const maneuver_planner_s *planner,
-                 or_pose_estimator_state *start, double height,
+                 or_pose_estimator_state *current, double height,
                  double duration,
                  sequence_or_pose_estimator_state *path,
                  const genom_context self)
@@ -145,23 +145,23 @@ mv_take_off_plan(const maneuver_planner_s *planner,
   kdtp::State to(planner->robot);
   genom_event e;
 
-  if (!start->pos._present) return maneuver_e_nostate(self);
+  if (!current->pos._present) return maneuver_e_nostate(self);
 
-  const or_t3d_pos *p = &start->pos._value;
+  const or_t3d_pos *p = &current->pos._value;
   from.position()[0] = p->x;
   from.position()[1] = p->y;
   from.position()[2] = p->z;
   from.position()[3] = atan2(
     2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
-  if (start->vel._present) {
-    const or_t3d_vel *v = &start->vel._value;
+  if (current->vel._present) {
+    const or_t3d_vel *v = &current->vel._value;
     from.velocity()[0] = v->vx;
     from.velocity()[1] = v->vy;
     from.velocity()[2] = v->vz;
     from.velocity()[3] = v->wz;
   }
-  if (start->acc._present) {
-    const or_t3d_acc *a = &start->acc._value;
+  if (current->acc._present) {
+    const or_t3d_acc *a = &current->acc._value;
     from.acceleration()[0] = a->ax;
     from.acceleration()[1] = a->ay;
     from.acceleration()[2] = a->az;
@@ -177,7 +177,7 @@ mv_take_off_plan(const maneuver_planner_s *planner,
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
-  *start = path->_buffer[path->_length-1];
+  *current = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
@@ -229,14 +229,14 @@ mv_plan_exec_wait(const maneuver_ids_trajectory_s *trajectory,
  */
 genom_event
 mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
-                  or_pose_estimator_state *start,
+                  or_pose_estimator_state *current,
                   const genom_context self)
 {
   /* (re)start from current state if a trajectory is being executed */
   if (trajectory->t._length > 0) {
-    *start = trajectory->t._buffer[trajectory->i];
-    start->vel._present = false;
-    start->acc._present = false;
+    *current = trajectory->t._buffer[trajectory->i];
+    current->vel._present = false;
+    current->acc._present = false;
     trajectory->t._length = 0;
   }
 
@@ -249,21 +249,12 @@ mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
 /** Codel mv_goto_plan of activity goto.
  *
  * Triggered by maneuver_start.
- * Yields to maneuver_plan.
- * Throws maneuver_e_nostate.
- */
-/* already defined in service take_off */
-
-
-/** Codel mv_goto_plan of activity goto.
- *
- * Triggered by maneuver_plan.
  * Yields to maneuver_exec.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
 mv_goto_plan(const maneuver_planner_s *planner,
-             or_pose_estimator_state *start, double x, double y,
+             or_pose_estimator_state *current, double x, double y,
              double z, double yaw, double duration,
              sequence_or_pose_estimator_state *path,
              const genom_context self)
@@ -272,23 +263,23 @@ mv_goto_plan(const maneuver_planner_s *planner,
   kdtp::State to(planner->robot);
   genom_event e;
 
-  if (!start->pos._present) return maneuver_e_nostate(self);
+  if (!current->pos._present) return maneuver_e_nostate(self);
 
-  const or_t3d_pos *p = &start->pos._value;
+  const or_t3d_pos *p = &current->pos._value;
   from.position()[0] = p->x;
   from.position()[1] = p->y;
   from.position()[2] = p->z;
   from.position()[3] = atan2(
     2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
-  if (start->vel._present) {
-    const or_t3d_vel *v = &start->vel._value;
+  if (current->vel._present) {
+    const or_t3d_vel *v = &current->vel._value;
     from.velocity()[0] = v->vx;
     from.velocity()[1] = v->vy;
     from.velocity()[2] = v->vz;
     from.velocity()[3] = v->wz;
   }
-  if (start->acc._present) {
-    const or_t3d_acc *a = &start->acc._value;
+  if (current->acc._present) {
+    const or_t3d_acc *a = &current->acc._value;
     from.acceleration()[0] = a->ax;
     from.acceleration()[1] = a->ay;
     from.acceleration()[2] = a->az;
@@ -306,7 +297,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
-  *start = path->_buffer[path->_length-1];
+  *current = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
@@ -348,7 +339,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
  */
 genom_event
 mv_waypoint_plan(const maneuver_planner_s *planner,
-                 or_pose_estimator_state *start, double x, double y,
+                 or_pose_estimator_state *current, double x, double y,
                  double z, double yaw, double vx, double vy, double vz,
                  double wz, double ax, double ay, double az,
                  double duration,
@@ -359,23 +350,23 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
   kdtp::State to(planner->robot);
   genom_event e;
 
-  if (!start->pos._present) return maneuver_e_nostate(self);
+  if (!current->pos._present) return maneuver_e_nostate(self);
 
-  const or_t3d_pos *p = &start->pos._value;
+  const or_t3d_pos *p = &current->pos._value;
   from.position()[0] = p->x;
   from.position()[1] = p->y;
   from.position()[2] = p->z;
   from.position()[3] = atan2(
     2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
-  if (start->vel._present) {
-    const or_t3d_vel *v = &start->vel._value;
+  if (current->vel._present) {
+    const or_t3d_vel *v = &current->vel._value;
     from.velocity()[0] = v->vx;
     from.velocity()[1] = v->vy;
     from.velocity()[2] = v->vz;
     from.velocity()[3] = v->wz;
   }
-  if (start->acc._present) {
-    const or_t3d_acc *a = &start->acc._value;
+  if (current->acc._present) {
+    const or_t3d_acc *a = &current->acc._value;
     from.acceleration()[0] = a->ax;
     from.acceleration()[1] = a->ay;
     from.acceleration()[2] = a->az;
@@ -402,7 +393,7 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
-  *start = path->_buffer[path->_length-1];
+  *current = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
@@ -453,7 +444,7 @@ mv_waypoint_add(const maneuver_planner_s *planner,
  */
 genom_event
 mv_replay_read(const maneuver_planner_s *planner,
-               or_pose_estimator_state *start,
+               or_pose_estimator_state *current,
                const char filename[128],
                sequence_or_pose_estimator_state *path,
                const genom_context self)
@@ -605,7 +596,7 @@ mv_replay_read(const maneuver_planner_s *planner,
     return mv_e_sys_error(filename, self);
   }
 
-  *start = path->_buffer[path->_length-1];
+  *current = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
