@@ -136,7 +136,7 @@ mv_current_state_start(const maneuver_state *state,
  */
 genom_event
 mv_take_off_plan(const maneuver_planner_s *planner,
-                 or_pose_estimator_state *current, double height,
+                 const or_pose_estimator_state *current, double height,
                  double duration,
                  sequence_or_pose_estimator_state *path,
                  const genom_context self)
@@ -177,7 +177,6 @@ mv_take_off_plan(const maneuver_planner_s *planner,
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
-  *current = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
@@ -190,6 +189,7 @@ mv_take_off_plan(const maneuver_planner_s *planner,
 genom_event
 mv_plan_exec(const maneuver_planner_s *planner,
              const sequence_or_pose_estimator_state *path,
+             or_pose_estimator_state *current,
              maneuver_ids_trajectory_s *trajectory,
              const genom_context self)
 {
@@ -203,6 +203,8 @@ mv_plan_exec(const maneuver_planner_s *planner,
   for(i = 0; i < path->_length; i++)
     trajectory->t._buffer[i] = path->_buffer[i];
   trajectory->t._length = path->_length;
+
+  *current = path->_buffer[path->_length-1];
 
   return maneuver_wait;
 }
@@ -254,8 +256,8 @@ mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
  */
 genom_event
 mv_goto_plan(const maneuver_planner_s *planner,
-             or_pose_estimator_state *current, double x, double y,
-             double z, double yaw, double duration,
+             const or_pose_estimator_state *current, double x,
+             double y, double z, double yaw, double duration,
              sequence_or_pose_estimator_state *path,
              const genom_context self)
 {
@@ -297,7 +299,6 @@ mv_goto_plan(const maneuver_planner_s *planner,
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
-  *current = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
@@ -339,9 +340,9 @@ mv_goto_plan(const maneuver_planner_s *planner,
  */
 genom_event
 mv_waypoint_plan(const maneuver_planner_s *planner,
-                 or_pose_estimator_state *current, double x, double y,
-                 double z, double yaw, double vx, double vy, double vz,
-                 double wz, double ax, double ay, double az,
+                 const or_pose_estimator_state *current, double x,
+                 double y, double z, double yaw, double vx, double vy,
+                 double vz, double wz, double ax, double ay, double az,
                  double duration,
                  sequence_or_pose_estimator_state *path,
                  const genom_context self)
@@ -393,7 +394,6 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
   e = mv_sample_path(lpath, path, self);
   if (e) return e;
 
-  *current = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
@@ -406,6 +406,7 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
 genom_event
 mv_waypoint_add(const maneuver_planner_s *planner,
                 const sequence_or_pose_estimator_state *path,
+                or_pose_estimator_state *current,
                 maneuver_ids_trajectory_s *trajectory,
                 const genom_context self)
 {
@@ -418,6 +419,8 @@ mv_waypoint_add(const maneuver_planner_s *planner,
   for(i = 0; i < path->_length; i++)
     trajectory->t._buffer[l + i] = path->_buffer[i];
   trajectory->t._length = l + path->_length;
+
+  *current = path->_buffer[path->_length-1];
 
   return maneuver_ether;
 }
@@ -444,7 +447,7 @@ mv_waypoint_add(const maneuver_planner_s *planner,
  */
 genom_event
 mv_replay_read(const maneuver_planner_s *planner,
-               or_pose_estimator_state *current,
+               const or_pose_estimator_state *current,
                const char filename[128],
                sequence_or_pose_estimator_state *path,
                const genom_context self)
@@ -596,7 +599,6 @@ mv_replay_read(const maneuver_planner_s *planner,
     return mv_e_sys_error(filename, self);
   }
 
-  *current = path->_buffer[path->_length-1];
   return maneuver_exec;
 }
 
