@@ -399,7 +399,7 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
 
 /** Codel mv_waypoint_add of activity waypoint.
  *
- * Triggered by maneuver_exec.
+ * Triggered by maneuver_exec, maneuver_stop.
  * Yields to maneuver_ether.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */

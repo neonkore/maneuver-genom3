@@ -331,6 +331,7 @@ a|.Context
   * Reads port `<<state>>`
   * Interrupts `<<take_off>>`
   * Interrupts `<<goto>>`
+  * Interrupts `<<waypoint>>`
   * Interrupts `<<replay>>`
 |===
 
@@ -424,6 +425,7 @@ a|.Context
   * In task `<<plan>>`
   * Interrupts `<<take_off>>`
   * Interrupts `<<goto>>`
+  * Interrupts `<<waypoint>>`
   * Interrupts `<<replay>>`
 |===
 

@@ -148,7 +148,7 @@ component maneuver {
       yield ether;
 
     throw e_nostate, e_limits;
-    interrupt take_off, goto, replay;
+    interrupt take_off, goto, waypoint, replay;
   };
 
   activity waypoint(in double x, in double y, in double z, in double yaw,
@@ -167,8 +167,8 @@ component maneuver {
                                   in duration,
                                   out path)
       yield exec;
-    codel<exec> mv_waypoint_add(in planner, in path,
-                                out current, inout trajectory)
+    codel<exec, stop> mv_waypoint_add(in planner, in path,
+                                      out current, inout trajectory)
       yield ether;
 
     throw e_nostate, e_limits;
@@ -203,7 +203,7 @@ component maneuver {
       yield ether;
 
     throw e_nostate, e_limits, e_sys;
-    interrupt take_off, goto, replay;
+    interrupt take_off, goto, waypoint, replay;
   };
 
 
