@@ -120,7 +120,7 @@ component maneuver {
                                  in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, out current, inout trajectory)
-      yield pause::exec, wait;
+      yield wait;
     codel<wait> mv_plan_exec_wait(in trajectory)
       yield pause::wait, ether;
 
@@ -144,7 +144,7 @@ component maneuver {
                              in x, in y, in z, in yaw, in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, out current, inout trajectory)
-      yield pause::exec, wait;
+      yield wait;
     codel<wait> mv_plan_exec_wait(in trajectory)
       yield pause::wait, ether;
 
@@ -171,8 +171,10 @@ component maneuver {
                                   in duration,
                                   out path)
       yield exec;
-    codel<exec, stop> mv_waypoint_add(in planner, in path,
-                                      out current, inout trajectory)
+    codel<exec, stop> mv_plan_exec(in planner, in path, out current,
+                                   inout trajectory)
+      yield wait;
+    codel<wait> mv_no_wait()
       yield ether;
 
     throw e_nostate, e_limits;

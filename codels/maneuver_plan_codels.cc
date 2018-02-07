@@ -203,7 +203,7 @@ mv_take_off_plan(const maneuver_planner_s *planner,
 /** Codel mv_plan_exec of activity take_off.
  *
  * Triggered by maneuver_exec.
- * Yields to maneuver_pause_exec, maneuver_wait.
+ * Yields to maneuver_wait.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
@@ -213,16 +213,15 @@ mv_plan_exec(const maneuver_planner_s *planner,
              maneuver_ids_trajectory_s *trajectory,
              const genom_context self)
 {
-  size_t i;
+  size_t i, l;
 
-  if (trajectory->t._length > 0) return maneuver_pause_exec;
-
-  if (genom_sequence_reserve(&trajectory->t, path->_length))
-    return mv_e_sys_error(NULL, self);
+  l = trajectory->t._length;
+  if (genom_sequence_reserve(&trajectory->t, l + path->_length))
+    return maneuver_e_sys(NULL, self);
 
   for(i = 0; i < path->_length; i++)
-    trajectory->t._buffer[i] = path->_buffer[i];
-  trajectory->t._length = path->_length;
+    trajectory->t._buffer[l + i] = path->_buffer[i];
+  trajectory->t._length = l + path->_length;
 
   *current = path->_buffer[path->_length-1];
 
@@ -334,7 +333,7 @@ mv_goto_plan(const maneuver_planner_s *planner,
 /** Codel mv_plan_exec of activity goto.
  *
  * Triggered by maneuver_exec.
- * Yields to maneuver_pause_exec, maneuver_wait.
+ * Yields to maneuver_wait.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 /* already defined in service take_off */
@@ -426,31 +425,24 @@ mv_waypoint_plan(const maneuver_planner_s *planner,
   return maneuver_exec;
 }
 
-/** Codel mv_waypoint_add of activity waypoint.
+/** Codel mv_plan_exec of activity waypoint.
  *
  * Triggered by maneuver_exec, maneuver_stop.
+ * Yields to maneuver_wait.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
+ */
+/* already defined in service take_off */
+
+
+/** Codel mv_no_wait of activity waypoint.
+ *
+ * Triggered by maneuver_wait.
  * Yields to maneuver_ether.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
-mv_waypoint_add(const maneuver_planner_s *planner,
-                const sequence_or_pose_estimator_state *path,
-                or_pose_estimator_state *current,
-                maneuver_ids_trajectory_s *trajectory,
-                const genom_context self)
+mv_no_wait(const genom_context self)
 {
-  size_t i, l;
-
-  l = trajectory->t._length;
-  if (genom_sequence_reserve(&trajectory->t, l + path->_length))
-    return maneuver_e_sys(NULL, self);
-
-  for(i = 0; i < path->_length; i++)
-    trajectory->t._buffer[l + i] = path->_buffer[i];
-  trajectory->t._length = l + path->_length;
-
-  *current = path->_buffer[path->_length-1];
-
   return maneuver_ether;
 }
 
