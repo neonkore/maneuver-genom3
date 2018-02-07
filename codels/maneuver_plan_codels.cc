@@ -128,9 +128,29 @@ mv_current_state_start(const maneuver_state *state,
 
 /* --- Activity take_off ------------------------------------------------ */
 
-/** Codel mv_take_off_plan of activity take_off.
+/** Codel mv_plan_cancel of activity take_off.
  *
  * Triggered by maneuver_start.
+ * Yields to maneuver_plan.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
+ */
+genom_event
+mv_plan_cancel(or_pose_estimator_state *current,
+               maneuver_ids_trajectory_s *trajectory,
+               const genom_context self)
+{
+  /* cancel any trajectory being executed */
+  if (trajectory->t._length > 0) {
+    *current = trajectory->t._buffer[trajectory->i];
+    trajectory->t._length = 0;
+  }
+
+  return maneuver_plan;
+}
+
+/** Codel mv_take_off_plan of activity take_off.
+ *
+ * Triggered by maneuver_plan.
  * Yields to maneuver_exec.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */
@@ -248,9 +268,18 @@ mv_plan_exec_stop(maneuver_ids_trajectory_s *trajectory,
 
 /* --- Activity goto ---------------------------------------------------- */
 
-/** Codel mv_goto_plan of activity goto.
+/** Codel mv_plan_cancel of activity goto.
  *
  * Triggered by maneuver_start.
+ * Yields to maneuver_plan.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
+ */
+/* already defined in service take_off */
+
+
+/** Codel mv_goto_plan of activity goto.
+ *
+ * Triggered by maneuver_plan.
  * Yields to maneuver_exec.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */

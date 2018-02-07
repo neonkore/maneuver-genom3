@@ -114,8 +114,10 @@ component maneuver {
 
     local sequence<or_pose_estimator::state> path;
 
-    codel<start> mv_take_off_plan(in planner, in current, in height,
-                                  in duration, out path)
+    codel<start> mv_plan_cancel(out current, inout trajectory)
+      yield plan;
+    codel<plan> mv_take_off_plan(in planner, in current, in height,
+                                 in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, out current, inout trajectory)
       yield pause::exec, wait;
@@ -136,8 +138,10 @@ component maneuver {
 
     local sequence<or_pose_estimator::state> path;
 
-    codel<start> mv_goto_plan(in planner, in current,
-                              in x, in y, in z, in yaw, in duration, out path)
+    codel<start> mv_plan_cancel(out current, inout trajectory)
+      yield plan;
+    codel<plan> mv_goto_plan(in planner, in current,
+                             in x, in y, in z, in yaw, in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in planner, in path, out current, inout trajectory)
       yield pause::exec, wait;
