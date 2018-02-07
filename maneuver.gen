@@ -128,7 +128,7 @@ component maneuver {
       yield ether;
 
     throw e_nostate, e_limits;
-    interrupt take_off, goto, replay;
+    interrupt take_off, goto, waypoint, replay;
   };
 
   activity goto(in double x, in double y, in double z, in double yaw,
