@@ -36,13 +36,25 @@ component maneuver {
   native planner_s;
   native log_s;
 
+  typedef double v6d[6];
+
+  struct configuration_s {
+    optional<or::t3d::pos> pos;
+    v6d vel;
+    v6d acc;
+    v6d jer;
+  };
+
+  enum motion { idling, moving };
+
   ids {
-    planner_s planner;
+    planner_s planner;		/* trajectory planner */
+    planner_s vplanner;		/* velocity planner */
 
-    or_pose_estimator::state current;
+    configuration_s reference;
 
-    struct trajectory_s {
-      sequence<or_pose_estimator::state> t;
+    struct trajectory_t {
+      sequence<configuration_s> t;
       unsigned long i;
     } trajectory;
 
@@ -104,7 +116,7 @@ component maneuver {
     doc		"Set initial planning position to current one";
     task	plan;
 
-    codel<start> mv_current_state_start(in state, out current)
+    codel<start> mv_current_state_read(in state, out reference)
       yield ether;
   };
 
@@ -112,23 +124,20 @@ component maneuver {
     doc		"Vertical take-off from current state";
     task	plan;
 
-    local sequence<or_pose_estimator::state> path;
+    local sequence<configuration_s> path;
 
-    codel<start> mv_plan_cancel(out current, inout trajectory)
+    codel<start> mv_plan_cancel(inout trajectory, out reference)
       yield plan;
-    codel<plan> mv_take_off_plan(in planner, in current, in height,
+    codel<plan> mv_plan_take_off(in planner, in reference, in height,
                                  in duration, out path)
       yield exec;
-    codel<exec> mv_plan_exec(in planner, in path, out current, inout trajectory)
+    codel<exec> mv_plan_exec(in path, out reference, inout trajectory)
       yield wait;
-    codel<wait> mv_plan_exec_wait(in trajectory)
+    codel<wait> mv_plan_wait(in trajectory)
       yield pause::wait, ether;
 
-    codel<stop> mv_plan_exec_stop(inout trajectory, out current)
-      yield ether;
-
     throw e_nostate, e_limits;
-    interrupt take_off, goto, waypoint, replay;
+    interrupt take_off, goto, waypoint, replay, stop;
   };
 
   activity goto(in double x, in double y, in double z, in double yaw,
@@ -136,23 +145,20 @@ component maneuver {
     doc		"Reach a given position from current state";
     task	plan;
 
-    local sequence<or_pose_estimator::state> path;
+    local sequence<configuration_s> path;
 
-    codel<start> mv_plan_cancel(out current, inout trajectory)
+    codel<start> mv_plan_cancel(inout trajectory, out reference)
       yield plan;
-    codel<plan> mv_goto_plan(in planner, in current,
+    codel<plan> mv_plan_goto(in planner, in reference,
                              in x, in y, in z, in yaw, in duration, out path)
       yield exec;
-    codel<exec> mv_plan_exec(in planner, in path, out current, inout trajectory)
+    codel<exec> mv_plan_exec(in path, out reference, inout trajectory)
       yield wait;
-    codel<wait> mv_plan_exec_wait(in trajectory)
+    codel<wait> mv_plan_wait(in trajectory)
       yield pause::wait, ether;
 
-    codel<stop> mv_plan_exec_stop(inout trajectory, out current)
-      yield ether;
-
     throw e_nostate, e_limits;
-    interrupt take_off, goto, waypoint, replay;
+    interrupt take_off, goto, waypoint, replay, stop;
   };
 
   activity waypoint(in double x, in double y, in double z, in double yaw,
@@ -162,55 +168,69 @@ component maneuver {
     doc		"Push a given position to reach after last one";
     task	plan;
 
-    local sequence<or_pose_estimator::state> path;
+    local sequence<configuration_s> path;
 
-    codel<start> mv_waypoint_plan(in planner, in current,
+    codel<start> mv_plan_waypoint(in planner, in reference,
                                   in x, in y, in z, in yaw,
                                   in vx, in vy, in vz, in wz,
                                   in ax, in ay, in az,
-                                  in duration,
-                                  out path)
+                                  in duration, out path)
       yield exec;
-    codel<exec, stop> mv_plan_exec(in planner, in path, out current,
-                                   inout trajectory)
+    codel<exec, stop> mv_plan_exec(in path, out reference, inout trajectory)
       yield wait;
     codel<wait> mv_no_wait()
       yield ether;
 
     throw e_nostate, e_limits;
-    interrupt waypoint;
+    interrupt waypoint, stop;
+  };
+
+  activity replay(in string<128> filename = "maneuver.log": "Log file name")
+  {
+    doc "Replay a trajectory log file";
+    task plan;
+
+    local sequence<configuration_s> path;
+
+    codel<start> mv_plan_cancel(inout trajectory, out reference)
+      yield plan;
+    codel<plan> mv_replay_read(in planner, in filename, out path)
+      yield exec;
+    codel<exec> mv_plan_exec(in path, out reference, inout trajectory)
+      yield wait;
+    codel<wait> mv_plan_wait(in trajectory)
+      yield pause::wait, ether;
+
+    throw e_nostate, e_limits, e_sys;
+    interrupt take_off, goto, waypoint, replay, stop;
   };
 
   activity wait() {
     doc		"Wait until last waypoint/goto point is reached";
     task	plan;
 
-    codel<start, wait> mv_plan_exec_wait(in trajectory)
+    codel<start, wait> mv_plan_wait(in trajectory)
       yield pause::wait, ether;
   };
 
-  activity
-  replay(in string<128> filename = "maneuver.log": "Log file name")
-  {
-    doc "Replay a trajectory log file";
-    task plan;
+  activity stop() {
+    doc		"Cancel any motion and set the desired state to empty";
+    task	plan;
 
-    local sequence<or_pose_estimator::state> path;
+    local sequence<configuration_s> path;
 
-    codel<start> mv_replay_read(in planner, in current, in filename,
-                                out path)
-      yield exec;
-    codel<exec> mv_plan_exec(in planner, in path, out current, inout trajectory)
-      yield pause::exec, wait;
-    codel<wait> mv_plan_exec_wait(in trajectory)
+    codel<start> mv_plan_cancel(inout trajectory, out reference)
+      yield plan;
+    codel<plan> mv_plan_zero(in vplanner, in reference, out path)
+      yield exec, ether;
+    codel<exec> mv_plan_exec(in path, out reference, inout trajectory)
+      yield wait;
+    codel<wait> mv_plan_wait(in trajectory)
       yield pause::wait, ether;
 
-    codel<stop> mv_plan_exec_stop(inout trajectory, out current)
-      yield ether;
-
-    throw e_nostate, e_limits, e_sys;
     interrupt take_off, goto, waypoint, replay;
   };
+
 
 
   /* --- execution --------------------------------------------------------- */
@@ -218,22 +238,21 @@ component maneuver {
   task exec {
     period control_period_ms ms;
 
-    codel<start> mv_exec_start(out desired, out trajectory)
+    codel<start> mv_exec_start(out reference, out trajectory, out desired)
       yield wait;
-    codel<wait> mv_exec_wait(in state, in trajectory)
-      yield pause::wait, main;
-    codel<main> mv_exec_main(in state, inout trajectory, out desired, inout log)
-      yield wait, pause::main, start;
+    codel<wait> mv_exec_wait(in trajectory, in reference, out desired)
+      yield pause::wait, wait, path, servo;
+
+    codel<path> mv_exec_path(inout trajectory,
+                             in reference, out desired, inout log)
+      yield pause::path, wait;
+    codel<servo> mv_exec_servo(inout reference, out desired, inout log)
+      yield pause::wait;
 
     codel<stop> mv_exec_stop() yield ether;
   };
 
-  activity stop() {
-    doc		"Cancel any motion and set the desired state to empty";
-    task	exec;
-
-    codel<start> mv_exec_reset(inout trajectory, out desired) yield ether;
-  };
+  attribute get_reference(out reference);
 
 
   /* --- logging ----------------------------------------------------------- */

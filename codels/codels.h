@@ -61,17 +61,17 @@ struct maneuver_log_s {
 
 # define mv_logfmt	" %g "
 # define mv_log_header_fmt                                              \
-  "ts x y z yaw vx vy vz wz ax ay az"
+  "ts "                                                                 \
+  "x y z roll pitch yaw "                                               \
+  "vx vy vz wx wy wz "                                                  \
+  "ax ay az dwx dwy dwz "                                               \
+  "jx jy jz ddwx ddwy ddwz"
 # define mv_log_fmt                                                     \
   "%d.%09d "                                                            \
-  mv_logfmt mv_logfmt mv_logfmt mv_logfmt                               \
-  mv_logfmt mv_logfmt mv_logfmt mv_logfmt                               \
-  mv_logfmt mv_logfmt mv_logfmt
-# define mv_replay_fmt                                                  \
-  "%d.%09d "                                                            \
-  "%lf %lf %lf %lf"                                                     \
-  "%lf %lf %lf %lf"                                                     \
-  "%lf %lf %lf"
+  mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt           \
+  mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt           \
+  mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt           \
+  mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt
 };
 
 #endif /* H_MANEUVER_CODELS */

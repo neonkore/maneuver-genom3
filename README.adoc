@@ -292,10 +292,11 @@ a|.Throws
 a|.Context
 [disc]
   * In task `<<plan>>`
-  * Reads port `<<state>>`
   * Interrupts `<<take_off>>`
   * Interrupts `<<goto>>`
+  * Interrupts `<<waypoint>>`
   * Interrupts `<<replay>>`
+  * Interrupts `<<stop>>`
 |===
 
 Vertical take-off from current state
@@ -328,11 +329,11 @@ a|.Throws
 a|.Context
 [disc]
   * In task `<<plan>>`
-  * Reads port `<<state>>`
   * Interrupts `<<take_off>>`
   * Interrupts `<<goto>>`
   * Interrupts `<<waypoint>>`
   * Interrupts `<<replay>>`
+  * Interrupts `<<stop>>`
 |===
 
 Reach a given position from current state
@@ -379,25 +380,11 @@ a|.Throws
 a|.Context
 [disc]
   * In task `<<plan>>`
-  * Reads port `<<state>>`
   * Interrupts `<<waypoint>>`
+  * Interrupts `<<stop>>`
 |===
 
 Push a given position to reach after last one
-
-'''
-
-[[wait]]
-=== wait (activity)
-
-[role="small", width="50%", float="right", cols="1"]
-|===
-a|.Context
-[disc]
-  * In task `<<plan>>`
-|===
-
-Wait until last waypoint/goto point is reached
 
 '''
 
@@ -427,9 +414,24 @@ a|.Context
   * Interrupts `<<goto>>`
   * Interrupts `<<waypoint>>`
   * Interrupts `<<replay>>`
+  * Interrupts `<<stop>>`
 |===
 
 Replay a trajectory log file
+
+'''
+
+[[wait]]
+=== wait (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * In task `<<plan>>`
+|===
+
+Wait until last waypoint/goto point is reached
 
 '''
 
@@ -440,12 +442,38 @@ Replay a trajectory log file
 |===
 a|.Context
 [disc]
-  * In task `<<exec>>`
-  (frequency 200.0 _Hz_)
-  * Updates port `<<desired>>`
+  * In task `<<plan>>`
+  * Interrupts `<<take_off>>`
+  * Interrupts `<<goto>>`
+  * Interrupts `<<waypoint>>`
+  * Interrupts `<<replay>>`
 |===
 
 Cancel any motion and set the desired state to empty
+
+'''
+
+[[get_reference]]
+=== get_reference (attribute)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Outputs
+[disc]
+ * `struct ::maneuver::configuration_s` `reference`
+ ** `optional< struct ::or::t3d::pos >` `pos`
+ *** `double` `x`
+ *** `double` `y`
+ *** `double` `z`
+ *** `double` `qw`
+ *** `double` `qx`
+ *** `double` `qy`
+ *** `double` `qz`
+ ** `double` `vel[6]`
+ ** `double` `acc[6]`
+ ** `double` `jer[6]`
+
+|===
 
 '''
 
@@ -519,7 +547,6 @@ a|.Context
 a|.Context
 [disc]
   * Frequency 200.0 _Hz_
-* Reads port `<<state>>`
 * Updates port `<<desired>>`
 |===
 
