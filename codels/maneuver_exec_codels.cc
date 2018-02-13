@@ -181,7 +181,12 @@ mv_exec_path(maneuver_ids_trajectory_t *trajectory,
   mv_exec_log(ddata->ts, s, *log);
 
   /* next */
-  trajectory->i++;
+  if (++trajectory->i >= trajectory->t._length) {
+    trajectory->t._length = 0;
+    trajectory->i = 0;
+    return maneuver_wait;
+  }
+
   return maneuver_pause_path;
 }
 
