@@ -16,11 +16,7 @@
  */
 #include "acmaneuver.h"
 
-#include <sys/time.h>
-
 #include <cmath>
-#include <cstdio>
-#include <iostream>
 
 #include "maneuver_c_types.h"
 #include "codels.h"
@@ -28,16 +24,6 @@
 
 /* --- Task plan -------------------------------------------------------- */
 
-static genom_event mv_check_duration(const kdtp::LocalPath &p,
-                                     const double duration,
-                                     const genom_context self);
-static genom_event mv_sample_path(const kdtp::LocalPath &p,
-                                  sequence_maneuver_configuration_s *path,
-                                  genom_context self);
-static genom_event mv_sample_velocity(const or_t3d_pos &from,
-                                      const kdtp::LocalPath &p,
-                                      sequence_maneuver_configuration_s *path,
-                                      genom_context self);
 
 /** Codel mv_plan_start of task plan.
  *
@@ -210,17 +196,10 @@ mv_plan_exec(const sequence_maneuver_configuration_s *path,
              maneuver_ids_trajectory_t *trajectory,
              const genom_context self)
 {
-  size_t i, l;
+  genom_event e;
 
-  l = trajectory->t._length + path->_length;
-  if (trajectory->t._maximum < l || trajectory->t._maximum > 2 * l)
-    if (genom_sequence_reserve(&trajectory->t, l))
-      return mv_e_sys_error(NULL, self);
-
-  for(i = 0; i < path->_length; i++)
-    trajectory->t._buffer[trajectory->t._length++] = path->_buffer[i];
-
-  *reference = path->_buffer[path->_length-1];
+  e = mv_push_path(path, reference, trajectory, self);
+  if (e) return e;
 
   return maneuver_wait;
 }
@@ -609,39 +588,14 @@ mv_plan_zero(const maneuver_planner_s *vplanner,
              sequence_maneuver_configuration_s *path,
              const genom_context self)
 {
-  struct timeval tv1, tv2;
-  gettimeofday(&tv1, NULL);
-
-  kdtp::State from(vplanner->robot);
-  kdtp::State to(vplanner->robot);
   genom_event e;
 
-  if (!reference->pos._present) return maneuver_ether;
-
-  /* uses the planner for velocity: position() is actually velocity etc. */
-  from.position()[0] = reference->vel[0];
-  from.position()[1] = reference->vel[1];
-  from.position()[2] = reference->vel[2];
-  from.position()[3] = reference->vel[5];
-
-  from.velocity()[0] = reference->acc[0];
-  from.velocity()[1] = reference->acc[1];
-  from.velocity()[2] = reference->acc[2];
-  from.velocity()[3] = reference->acc[5];
-
-  from.acceleration()[0] = reference->jer[0];
-  from.acceleration()[1] = reference->jer[1];
-  from.acceleration()[2] = reference->jer[2];
-  from.acceleration()[3] = reference->jer[5];
-
   /* goto 0 velocity in minimum time */
-  kdtp::LocalPath lpath(vplanner->robot, from, to, 0.);
-
-  e = mv_sample_velocity(reference->pos._value, lpath, path, self);
+  e = mv_plan_velocity(vplanner, reference,
+                       0., 0., 0., 0., 0., 0., 0., 0.,
+                       path, self);
   if (e) return e;
 
-  gettimeofday(&tv2, NULL);
-  printf("%g\n", tv2.tv_sec - tv1.tv_sec + 1e-6*(tv2.tv_usec - tv1.tv_usec));
   return maneuver_exec;
 }
 
@@ -659,152 +613,3 @@ mv_plan_zero(const maneuver_planner_s *vplanner,
  * Yields to maneuver_pause_wait, maneuver_ether.
  */
 /* already defined in service take_off */
-
-
-
-/* --- local functions ----------------------------------------------------- */
-
-/*
- * consider limits
- */
-static genom_event
-mv_check_duration(const kdtp::LocalPath &p, const double duration,
-                  const genom_context self)
-{
-  /* consider limits */
-  if (duration > 0. && p.duration() > duration)
-    return maneuver_e_limits(self);
-
-  return genom_ok;
-}
-
-
-/*
- * sample local path according to the exec task period
- */
-static genom_event
-mv_sample_path(const kdtp::LocalPath &p,
-               sequence_maneuver_configuration_s *path, genom_context self)
-{
-  static const double dt = maneuver_control_period_ms/1000.;
-
-  std::vector<std::vector<double> > q;
-  maneuver_configuration_s s;
-  size_t i;
-
-  i = 2 + p.duration()/dt;
-  if (path->_maximum < i || path->_maximum > 2 * i)
-    if (genom_sequence_reserve(path, i))
-      return mv_e_sys_error(NULL, self);
-  path->_length = i;
-
-  s.pos._present = true;
-  s.pos._value.qx = 0.;
-  s.pos._value.qy = 0.;
-
-  s.vel[3] = 0.;
-  s.vel[4] = 0.;
-
-  s.acc[3] = 0.;
-  s.acc[4] = 0.;
-
-  s.jer[3] = 0.;
-  s.jer[4] = 0.;
-
-  for(i = 0; i < path->_length; i++) {
-    q = p.getAllAt(i * dt);
-
-    s.pos._value.x = q[0][0];
-    s.pos._value.y = q[1][0];
-    s.pos._value.z = q[2][0];
-    s.pos._value.qw = std::cos(q[3][0]/2.);
-    s.pos._value.qz = std::sin(q[3][0]/2.);
-
-    s.vel[0] = q[0][1];
-    s.vel[1] = q[1][1];
-    s.vel[2] = q[2][1];
-    s.vel[5] = q[3][1];
-
-    s.acc[0] = q[0][2];
-    s.acc[1] = q[1][2];
-    s.acc[2] = q[2][2];
-    s.acc[5] = q[3][2];
-
-    s.jer[0] = q[0][3];
-    s.jer[1] = q[1][3];
-    s.jer[2] = q[2][3];
-    s.jer[5] = q[3][3];
-
-    path->_buffer[i] = s;
-  }
-
-  return genom_ok;
-}
-
-
-/*
- * sample local velocity profile according to the exec task period
- */
-static genom_event
-mv_sample_velocity(const or_t3d_pos &from, const kdtp::LocalPath &p,
-                   sequence_maneuver_configuration_s *path, genom_context self)
-{
-  static const double dt = maneuver_control_period_ms/1000.;
-  static const double dt2_2 = dt*dt/2.;
-  static const double dt3_6 = dt*dt2_2/3.;
-
-  std::vector<std::vector<double> > q;
-  maneuver_configuration_s s;
-  double yaw;
-  size_t i;
-
-  i = 2 + p.duration()/dt;
-  if (path->_maximum < i || path->_maximum > 2 * i)
-    if (genom_sequence_reserve(path, i)) return maneuver_e_sys(NULL, self);
-  path->_length = i;
-
-  printf("samples %zu\n", i);
-  s.pos._present = true;
-  s.pos._value = from;
-  yaw = 2 * atan2(s.pos._value.qz, s.pos._value.qw);
-
-  s.vel[3] = 0.;
-  s.vel[4] = 0.;
-
-  s.acc[3] = 0.;
-  s.acc[4] = 0.;
-
-  s.jer[3] = 0.;
-  s.jer[4] = 0.;
-
-  for(i = 0; i < path->_length; i++) {
-    q = p.getAllAt(i * dt);
-
-    s.vel[0] = q[0][0];
-    s.vel[1] = q[1][0];
-    s.vel[2] = q[2][0];
-    s.vel[5] = q[3][0];
-
-    s.acc[0] = q[0][1];
-    s.acc[1] = q[1][1];
-    s.acc[2] = q[2][1];
-    s.acc[5] = q[3][1];
-
-    s.jer[0] = q[0][2];
-    s.jer[1] = q[1][2];
-    s.jer[2] = q[2][2];
-    s.jer[5] = q[3][2];
-
-    path->_buffer[i] = s;
-
-    /* integrate position */
-    s.pos._value.x += dt*s.vel[0] + dt2_2*s.acc[0] + dt3_6*s.jer[0];
-    s.pos._value.y += dt*s.vel[1] + dt2_2*s.acc[1] + dt3_6*s.jer[1];
-    s.pos._value.z += dt*s.vel[2] + dt2_2*s.acc[2] + dt3_6*s.jer[2];
-    yaw += dt*s.vel[5] + dt2_2*s.acc[5] + dt3_6*s.jer[5];
-    s.pos._value.qw = std::cos(yaw/2.); /* XXX assumes roll/pitch == 0 */
-    s.pos._value.qz = std::sin(yaw/2.);
-  }
-
-  return genom_ok;
-}

@@ -21,6 +21,7 @@ libmaneuver_codels_la_SOURCES+=	maneuver_codels.cc
 libmaneuver_codels_la_SOURCES+=	maneuver_plan_codels.cc
 libmaneuver_codels_la_SOURCES+=	maneuver_exec_codels.cc
 
+libmaneuver_codels_la_SOURCES+=	helpers.cc
 libmaneuver_codels_la_SOURCES+=	codels.h
 
 libmaneuver_codels_la_CPPFLAGS=	$(requires_CFLAGS)

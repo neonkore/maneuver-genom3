@@ -16,6 +16,8 @@
  */
 #include "acmaneuver.h"
 
+#include <sys/time.h>
+
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -54,6 +56,17 @@ mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
  *
  * Returns genom_ok.
  * Throws maneuver_e_nostate, maneuver_e_limits.
+ */
+/* already defined in service take_off validation */
+
+
+
+/* --- Function velocity ------------------------------------------------ */
+
+/** Validation codel mv_plan_cancel of function velocity.
+ *
+ * Returns genom_ok.
+ * Throws maneuver_e_limits.
  */
 /* already defined in service take_off validation */
 
@@ -209,6 +222,95 @@ mv_get_limits(maneuver_planner_s **planner, double *xmin, double *xmax,
 
   *s = (*planner)->robot.getDof(0).getSnapMax();
   *dddw = (*planner)->robot.getDof(3).getSnapMax();
+
+  return genom_ok;
+}
+
+
+/* --- Function velocity ------------------------------------------------ */
+
+/** Codel mv_plan_velocity of function velocity.
+ *
+ * Returns genom_ok.
+ * Throws maneuver_e_limits.
+ */
+genom_event
+mv_plan_velocity(const maneuver_planner_s *vplanner,
+                 const maneuver_configuration_s *reference, double vx,
+                 double vy, double vz, double wz, double ax, double ay,
+                 double az, double duration,
+                 sequence_maneuver_configuration_s *path,
+                 const genom_context self)
+{
+  struct timeval tv1, tv2;
+  gettimeofday(&tv1, NULL);
+
+  kdtp::State from(vplanner->robot);
+  kdtp::State to(vplanner->robot);
+  genom_event e;
+
+  /* uses the planner for velocity: position() is actually velocity etc. */
+  from.position()[0] = reference->vel[0];
+  from.position()[1] = reference->vel[1];
+  from.position()[2] = reference->vel[2];
+  from.position()[3] = reference->vel[5];
+
+  from.velocity()[0] = reference->acc[0];
+  from.velocity()[1] = reference->acc[1];
+  from.velocity()[2] = reference->acc[2];
+  from.velocity()[3] = reference->acc[5];
+
+  from.acceleration()[0] = reference->jer[0];
+  from.acceleration()[1] = reference->jer[1];
+  from.acceleration()[2] = reference->jer[2];
+  from.acceleration()[3] = reference->jer[5];
+
+  to.position()[0] = vx;
+  to.position()[1] = vy;
+  to.position()[2] = vz;
+  to.position()[3] = wz;
+
+  to.velocity()[0] = ax;
+  to.velocity()[1] = ay;
+  to.velocity()[2] = az;
+
+  kdtp::LocalPath lpath(vplanner->robot, from, to, duration);
+
+  e = mv_check_duration(lpath, duration, self);
+  if (e) return e;
+  e = mv_sample_velocity(reference->pos, lpath, path, self);
+  if (e) return e;
+
+  gettimeofday(&tv2, NULL);
+  printf("%g\n", tv2.tv_sec - tv1.tv_sec + 1e-6*(tv2.tv_usec - tv1.tv_usec));
+
+  return genom_ok;
+}
+
+/** Codel mv_push_path of function velocity.
+ *
+ * Returns genom_ok.
+ * Throws maneuver_e_limits.
+ */
+genom_event
+mv_push_path(const sequence_maneuver_configuration_s *path,
+             maneuver_configuration_s *reference,
+             maneuver_ids_trajectory_t *trajectory,
+             const genom_context self)
+{
+  size_t i, l;
+
+  if (!path->_length) return genom_ok;
+
+  l = trajectory->t._length + path->_length;
+  if (trajectory->t._maximum < l || trajectory->t._maximum > 2 * l)
+    if (genom_sequence_reserve(&trajectory->t, l))
+      return mv_e_sys_error(NULL, self);
+
+  for(i = 0; i < path->_length; i++)
+    trajectory->t._buffer[trajectory->t._length++] = path->_buffer[i];
+
+  *reference = path->_buffer[path->_length-1];
 
   return genom_ok;
 }

@@ -74,4 +74,15 @@ struct maneuver_log_s {
   mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt mv_logfmt
 };
 
+
+genom_event	mv_check_duration(const kdtp::LocalPath &p,
+                        const double duration, const genom_context self);
+genom_event	mv_sample_path(const kdtp::LocalPath &p,
+                        sequence_maneuver_configuration_s *path,
+                        genom_context self);
+genom_event	mv_sample_velocity(const optional_or_t3d_pos &from,
+                        const kdtp::LocalPath &p,
+                        sequence_maneuver_configuration_s *path,
+                        genom_context self);
+
 #endif /* H_MANEUVER_CODELS */

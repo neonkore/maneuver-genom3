@@ -185,6 +185,25 @@ component maneuver {
     interrupt waypoint, stop;
   };
 
+  function velocity(in double vx, in double vy, in double vz, in double wz,
+                    in double ax, in double ay, in double az,
+                    in double duration) {
+    doc		"Reach a desired velocity within a given duration";
+
+    local sequence<configuration_s> path;
+
+    validate mv_plan_cancel(inout trajectory, out reference);
+
+    codel mv_plan_velocity(in vplanner, in reference,
+                           in vx, in vy, in vz, in wz,
+                           in ax, in ay, in az,
+                           in duration, out path);
+    codel mv_push_path(in path, out reference, inout trajectory);
+
+    throw e_limits;
+    interrupt take_off, goto, replay, stop;
+  };
+
   activity replay(in string<128> filename = "maneuver.log": "Log file name")
   {
     doc "Replay a trajectory log file";
@@ -230,7 +249,6 @@ component maneuver {
 
     interrupt take_off, goto, waypoint, replay;
   };
-
 
 
   /* --- execution --------------------------------------------------------- */

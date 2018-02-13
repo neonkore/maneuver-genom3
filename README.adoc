@@ -388,6 +388,47 @@ Push a given position to reach after last one
 
 '''
 
+[[velocity]]
+=== velocity (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `vx`
+
+ * `double` `vy`
+
+ * `double` `vz`
+
+ * `double` `wz`
+
+ * `double` `ax`
+
+ * `double` `ay`
+
+ * `double` `az`
+
+ * `double` `duration`
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_nostate`
+
+ * `exception ::maneuver::e_limits`
+
+a|.Context
+[disc]
+  * Interrupts `<<take_off>>`
+  * Interrupts `<<goto>>`
+  * Interrupts `<<replay>>`
+  * Interrupts `<<stop>>`
+|===
+
+Reach a desired velocity within a given duration
+
+'''
+
 [[replay]]
 === replay (activity)
 
