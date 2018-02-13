@@ -25,6 +25,62 @@
 #include "codels.h"
 
 
+/* --- Activity take_off ------------------------------------------------ */
+
+/** Validation codel mv_plan_cancel of activity take_off.
+ *
+ * Returns genom_ok.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
+ */
+genom_event
+mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
+               maneuver_configuration_s *reference,
+               const genom_context self)
+{
+  /* (re)start from current state if a trajectory is being executed */
+  if (trajectory->t._length > 0) {
+    *reference = trajectory->t._buffer[trajectory->i];
+    trajectory->t._length = 0;
+    trajectory->i = 0;
+  }
+
+  return genom_ok;
+}
+
+
+/* --- Activity goto ---------------------------------------------------- */
+
+/** Validation codel mv_plan_cancel of activity goto.
+ *
+ * Returns genom_ok.
+ * Throws maneuver_e_nostate, maneuver_e_limits.
+ */
+/* already defined in service take_off validation */
+
+
+
+/* --- Activity replay -------------------------------------------------- */
+
+/** Validation codel mv_plan_cancel of activity replay.
+ *
+ * Returns genom_ok.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
+ */
+/* already defined in service take_off validation */
+
+
+
+/* --- Activity stop ---------------------------------------------------- */
+
+/** Validation codel mv_plan_cancel of activity stop.
+ *
+ * Returns genom_ok.
+ * Throws .
+ */
+/* already defined in service take_off validation */
+
+
+
 /* --- Function set_bounds ---------------------------------------------- */
 
 /** Codel mv_set_bounds of function set_bounds.

@@ -149,30 +149,9 @@ mv_current_state_read(const maneuver_state *state,
 
 /* --- Activity take_off ------------------------------------------------ */
 
-/** Codel mv_plan_cancel of activity take_off.
- *
- * Triggered by maneuver_start.
- * Yields to maneuver_plan.
- * Throws maneuver_e_nostate, maneuver_e_limits.
- */
-genom_event
-mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
-               maneuver_configuration_s *reference,
-               const genom_context self)
-{
-  /* (re)start from current state if a trajectory is being executed */
-  if (trajectory->t._length > 0) {
-    *reference = trajectory->t._buffer[trajectory->i];
-    trajectory->t._length = 0;
-    trajectory->i = 0;
-  }
-
-  return maneuver_plan;
-}
-
 /** Codel mv_plan_take_off of activity take_off.
  *
- * Triggered by maneuver_plan.
+ * Triggered by maneuver_start.
  * Yields to maneuver_exec.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */
@@ -262,18 +241,9 @@ mv_plan_wait(const maneuver_ids_trajectory_t *trajectory,
 
 /* --- Activity goto ---------------------------------------------------- */
 
-/** Codel mv_plan_cancel of activity goto.
- *
- * Triggered by maneuver_start.
- * Yields to maneuver_plan.
- * Throws maneuver_e_nostate, maneuver_e_limits.
- */
-/* already defined in service take_off */
-
-
 /** Codel mv_plan_goto of activity goto.
  *
- * Triggered by maneuver_plan.
+ * Triggered by maneuver_start.
  * Yields to maneuver_exec.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */
@@ -428,17 +398,9 @@ mv_no_wait(const genom_context self)
 
 /* --- Activity replay -------------------------------------------------- */
 
-/** Codel mv_plan_cancel of activity replay.
- *
- * Triggered by maneuver_start.
- * Yields to maneuver_plan.
- * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
- */
-/* already defined in service take_off */
-
 /** Codel mv_replay_read of activity replay.
  *
- * Triggered by maneuver_plan.
+ * Triggered by maneuver_start.
  * Yields to maneuver_exec.
  * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
@@ -635,17 +597,9 @@ mv_replay_read(const maneuver_planner_s *planner,
 
 /* --- Activity stop ---------------------------------------------------- */
 
-/** Codel mv_plan_cancel of activity stop.
- *
- * Triggered by maneuver_start.
- * Yields to maneuver_plan.
- */
-/* already defined in service take_off */
-
-
 /** Codel mv_plan_zero of activity stop.
  *
- * Triggered by maneuver_plan.
+ * Triggered by maneuver_start.
  * Yields to maneuver_exec, maneuver_ether.
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */

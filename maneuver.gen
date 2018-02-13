@@ -126,10 +126,10 @@ component maneuver {
 
     local sequence<configuration_s> path;
 
-    codel<start> mv_plan_cancel(inout trajectory, out reference)
-      yield plan;
-    codel<plan> mv_plan_take_off(in planner, in reference, in height,
-                                 in duration, out path)
+    validate mv_plan_cancel(inout trajectory, out reference);
+
+    codel<start> mv_plan_take_off(in planner, in reference, in height,
+                                  in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in path, out reference, inout trajectory)
       yield wait;
@@ -147,10 +147,10 @@ component maneuver {
 
     local sequence<configuration_s> path;
 
-    codel<start> mv_plan_cancel(inout trajectory, out reference)
-      yield plan;
-    codel<plan> mv_plan_goto(in planner, in reference,
-                             in x, in y, in z, in yaw, in duration, out path)
+    validate mv_plan_cancel(inout trajectory, out reference);
+
+    codel<start> mv_plan_goto(in planner, in reference,
+                              in x, in y, in z, in yaw, in duration, out path)
       yield exec;
     codel<exec> mv_plan_exec(in path, out reference, inout trajectory)
       yield wait;
@@ -192,9 +192,9 @@ component maneuver {
 
     local sequence<configuration_s> path;
 
-    codel<start> mv_plan_cancel(inout trajectory, out reference)
-      yield plan;
-    codel<plan> mv_replay_read(in planner, in filename, out path)
+    validate mv_plan_cancel(inout trajectory, out reference);
+
+    codel<start> mv_replay_read(in planner, in filename, out path)
       yield exec;
     codel<exec> mv_plan_exec(in path, out reference, inout trajectory)
       yield wait;
@@ -219,9 +219,9 @@ component maneuver {
 
     local sequence<configuration_s> path;
 
-    codel<start> mv_plan_cancel(inout trajectory, out reference)
-      yield plan;
-    codel<plan> mv_plan_zero(in vplanner, in reference, out path)
+    validate mv_plan_cancel(inout trajectory, out reference);
+
+    codel<start> mv_plan_zero(in vplanner, in reference, out path)
       yield exec, ether;
     codel<exec> mv_plan_exec(in path, out reference, inout trajectory)
       yield wait;
