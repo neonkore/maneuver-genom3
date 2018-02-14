@@ -407,6 +407,7 @@ mv_replay_read(const maneuver_planner_s *planner,
   if (!f) return mv_e_sys_error(filename, self);
 
   path->_length = 0;
+  now = 0; /* false positive -Werror=maybe-uninitialized */
 
   interp._maximum = 0;
   interp._length = 0;
