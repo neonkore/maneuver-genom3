@@ -53,8 +53,8 @@ mv_sample_path(const kdtp::LocalPath &p,
 {
   static const double dt = maneuver_control_period_ms/1000.;
 
-  std::vector<std::vector<double> > q;
   maneuver_configuration_s s;
+  double q[4][5];
   size_t i;
 
   i = 2 + p.duration()/dt;
@@ -77,7 +77,7 @@ mv_sample_path(const kdtp::LocalPath &p,
   s.jer[4] = 0.;
 
   for(i = 0; i < path->_length; i++) {
-    q = p.getAllAt(i * dt);
+    p.getAllAt(i * dt, q);
 
     s.pos._value.x = q[0][0];
     s.pos._value.y = q[1][0];
@@ -118,8 +118,8 @@ mv_sample_velocity(const optional_or_t3d_pos &from, const kdtp::LocalPath &p,
   static const double dt2_2 = dt*dt/2.;
   static const double dt3_6 = dt*dt2_2/3.;
 
-  std::vector<std::vector<double> > q;
   maneuver_configuration_s s;
+  double q[4][5];
   double dyaw, qw, qz, dqw, dqz;
   size_t i;
 
@@ -141,7 +141,7 @@ mv_sample_velocity(const optional_or_t3d_pos &from, const kdtp::LocalPath &p,
   s.jer[4] = 0.;
 
   for(i = 0; i < path->_length; i++) {
-    q = p.getAllAt(i * dt);
+    p.getAllAt(i * dt, q);
 
     s.vel[0] = q[0][0];
     s.vel[1] = q[1][0];

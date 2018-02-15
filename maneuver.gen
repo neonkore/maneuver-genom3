@@ -22,7 +22,7 @@ component maneuver {
   version		"1.3";
   email			"openrobots@laas.fr";
   lang			"c";
-  codels-require	"libkdtp >= 1.1";
+  codels-require	"libkdtp >= 1.2";
 
   uses		or_pose_estimator;
 
