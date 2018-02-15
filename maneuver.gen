@@ -118,6 +118,8 @@ component maneuver {
 
     codel<start> mv_current_state_read(in state, out reference)
       yield ether;
+
+    throw e_nostate;
   };
 
   activity take_off(in double height, in double duration) {
