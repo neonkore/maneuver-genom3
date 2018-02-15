@@ -165,6 +165,10 @@ a|.Inputs
 
  * `double` `w`
 
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_limits`
+
 |===
 
 '''
@@ -179,6 +183,10 @@ a|.Inputs
  * `double` `a`
 
  * `double` `dw`
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_limits`
 
 |===
 
@@ -195,6 +203,10 @@ a|.Inputs
 
  * `double` `ddw`
 
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_limits`
+
 |===
 
 '''
@@ -209,6 +221,10 @@ a|.Inputs
  * `double` `s`
 
  * `double` `dddw`
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_limits`
 
 |===
 
@@ -262,6 +278,10 @@ a|.Outputs
 
 [role="small", width="50%", float="right", cols="1"]
 |===
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_nostate`
+
 a|.Context
 [disc]
   * In task `<<plan>>`

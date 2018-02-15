@@ -41,7 +41,7 @@ dnl External packages
 PKG_CHECK_MODULES(requires, [
   genom3 >= 2.99.4
   openrobots-idl >= 1.2
-  libkdtp >= 1.1
+  libkdtp >= 1.2
 ])
 
 AC_PATH_PROG(GENOM3, [genom3], AC_MSG_ERROR([genom3 tool not found], 2))

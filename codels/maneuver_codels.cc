@@ -122,15 +122,28 @@ mv_set_bounds(maneuver_planner_s **planner, double xmin, double xmax,
 /** Codel mv_set_velocity_limit of function set_velocity_limit.
  *
  * Returns genom_ok.
+ * Throws maneuver_e_limits.
  */
 genom_event
-mv_set_velocity_limit(maneuver_planner_s **planner, double v, double w,
-                      const genom_context self)
+mv_set_velocity_limit(maneuver_planner_s **planner,
+                      maneuver_planner_s **vplanner, double v,
+                      double w, const genom_context self)
 {
-  (*planner)->robot.getDof(0).setVelocityMax(v);
-  (*planner)->robot.getDof(1).setVelocityMax(v);
-  (*planner)->robot.getDof(2).setVelocityMax(v);
+  int i;
+
+  if (v < 0. || w < 0.) return maneuver_e_limits(self);
+
+  for(i = 0; i < 3; i++)
+    (*planner)->robot.getDof(i).setVelocityMax(v);
   (*planner)->robot.getDof(3).setVelocityMax(w);
+
+  for(i = 0; i < 3; i++) {
+    (*vplanner)->robot.getDof(i).setPositionMin(-v);
+    (*vplanner)->robot.getDof(i).setPositionMax(v);
+  }
+  (*vplanner)->robot.getDof(3).setPositionMin(-w);
+  (*vplanner)->robot.getDof(3).setPositionMax(w);
+
   return genom_ok;
 }
 
@@ -140,15 +153,25 @@ mv_set_velocity_limit(maneuver_planner_s **planner, double v, double w,
 /** Codel mv_set_acceleration_limit of function set_acceleration_limit.
  *
  * Returns genom_ok.
+ * Throws maneuver_e_limits.
  */
 genom_event
-mv_set_acceleration_limit(maneuver_planner_s **planner, double a,
+mv_set_acceleration_limit(maneuver_planner_s **planner,
+                          maneuver_planner_s **vplanner, double a,
                           double dw, const genom_context self)
 {
-  (*planner)->robot.getDof(0).setAccelerationMax(a);
-  (*planner)->robot.getDof(1).setAccelerationMax(a);
-  (*planner)->robot.getDof(2).setAccelerationMax(a);
+  int i;
+
+  if (a < 0. || dw < 0.) return maneuver_e_limits(self);
+
+  for(i = 0; i < 3; i++)
+    (*planner)->robot.getDof(i).setAccelerationMax(a);
   (*planner)->robot.getDof(3).setAccelerationMax(dw);
+
+  for(i = 0; i < 3; i++)
+    (*vplanner)->robot.getDof(i).setVelocityMax(a);
+  (*vplanner)->robot.getDof(3).setVelocityMax(dw);
+
   return genom_ok;
 }
 
@@ -158,15 +181,25 @@ mv_set_acceleration_limit(maneuver_planner_s **planner, double a,
 /** Codel mv_set_jerk_limit of function set_jerk_limit.
  *
  * Returns genom_ok.
+ * Throws maneuver_e_limits.
  */
 genom_event
-mv_set_jerk_limit(maneuver_planner_s **planner, double j, double ddw,
+mv_set_jerk_limit(maneuver_planner_s **planner,
+                  maneuver_planner_s **vplanner, double j, double ddw,
                   const genom_context self)
 {
-  (*planner)->robot.getDof(0).setJerkMax(j);
-  (*planner)->robot.getDof(1).setJerkMax(j);
-  (*planner)->robot.getDof(2).setJerkMax(j);
+  int i;
+
+  if (j < 0. || ddw < 0.) return maneuver_e_limits(self);
+
+  for(i = 0; i < 3; i++)
+    (*planner)->robot.getDof(i).setJerkMax(j);
   (*planner)->robot.getDof(3).setJerkMax(ddw);
+
+  for(i = 0; i < 3; i++)
+    (*vplanner)->robot.getDof(i).setAccelerationMax(j);
+  (*vplanner)->robot.getDof(3).setAccelerationMax(ddw);
+
   return genom_ok;
 }
 
@@ -176,15 +209,28 @@ mv_set_jerk_limit(maneuver_planner_s **planner, double j, double ddw,
 /** Codel mv_set_snap_limit of function set_snap_limit.
  *
  * Returns genom_ok.
+ * Throws maneuver_e_limits.
  */
 genom_event
-mv_set_snap_limit(maneuver_planner_s **planner, double s, double dddw,
+mv_set_snap_limit(maneuver_planner_s **planner,
+                  maneuver_planner_s **vplanner, double s, double dddw,
                   const genom_context self)
 {
-  (*planner)->robot.getDof(0).setSnapMax(s);
-  (*planner)->robot.getDof(1).setSnapMax(s);
-  (*planner)->robot.getDof(2).setSnapMax(s);
+  int i;
+
+  if (s < 0. || dddw < 0.) return maneuver_e_limits(self);
+
+  for(i = 0; i < 3; i++)
+    (*planner)->robot.getDof(i).setSnapMax(s);
   (*planner)->robot.getDof(3).setSnapMax(dddw);
+
+  for(i = 0; i < 3; i++) {
+    (*vplanner)->robot.getDof(i).setJerkMax(s);
+    (*vplanner)->robot.getDof(i).setSnapMax(1000. * s);
+  }
+  (*vplanner)->robot.getDof(3).setJerkMax(dddw);
+  (*vplanner)->robot.getDof(3).setSnapMax(1000. * dddw);
+
   return genom_ok;
 }
 

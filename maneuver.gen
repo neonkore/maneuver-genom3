@@ -73,16 +73,20 @@ component maneuver {
                         in yawmin, in yawmax);
   };
   function set_velocity_limit(in double v, in double w) {
-    codel mv_set_velocity_limit(inout planner, in v, in w);
+    codel mv_set_velocity_limit(inout planner, inout vplanner, in v, in w);
+    throw e_limits;
   };
   function set_acceleration_limit(in double a, in double dw) {
-    codel mv_set_acceleration_limit(inout planner, in a, in dw);
+    codel mv_set_acceleration_limit(inout planner, inout vplanner, in a, in dw);
+    throw e_limits;
   };
   function set_jerk_limit(in double j, in double ddw) {
-    codel mv_set_jerk_limit(inout planner, in j, in ddw);
+    codel mv_set_jerk_limit(inout planner, inout vplanner, in j, in ddw);
+    throw e_limits;
   };
   function set_snap_limit(in double s, in double dddw) {
-    codel mv_set_snap_limit(inout planner, in s, in dddw);
+    codel mv_set_snap_limit(inout planner, inout vplanner, in s, in dddw);
+    throw e_limits;
   };
 
   function get_limits(out double xmin, out double xmax,

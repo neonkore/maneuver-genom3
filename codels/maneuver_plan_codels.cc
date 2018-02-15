@@ -105,6 +105,7 @@ mv_plan_stop(maneuver_ids *ids, const genom_context self)
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_ether.
+ * Throws maneuver_e_nostate.
  */
 genom_event
 mv_current_state_read(const maneuver_state *state,
