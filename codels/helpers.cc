@@ -120,7 +120,7 @@ mv_sample_velocity(const optional_or_t3d_pos &from, const kdtp::LocalPath &p,
 
   std::vector<std::vector<double> > q;
   maneuver_configuration_s s;
-  double yaw;
+  double dyaw, qw, qz, dqw, dqz;
   size_t i;
 
   i = 2 + p.duration()/dt;
@@ -130,7 +130,6 @@ mv_sample_velocity(const optional_or_t3d_pos &from, const kdtp::LocalPath &p,
 
   printf("samples %zu\n", i);
   s.pos = from;
-  yaw = 2 * atan2(s.pos._value.qz, s.pos._value.qw);
 
   s.vel[3] = 0.;
   s.vel[4] = 0.;
@@ -166,9 +165,23 @@ mv_sample_velocity(const optional_or_t3d_pos &from, const kdtp::LocalPath &p,
       s.pos._value.x += dt*s.vel[0] + dt2_2*s.acc[0] + dt3_6*s.jer[0];
       s.pos._value.y += dt*s.vel[1] + dt2_2*s.acc[1] + dt3_6*s.jer[1];
       s.pos._value.z += dt*s.vel[2] + dt2_2*s.acc[2] + dt3_6*s.jer[2];
-      yaw += dt*s.vel[5] + dt2_2*s.acc[5] + dt3_6*s.jer[5];
-      s.pos._value.qw = std::cos(yaw/2.); /* XXX assumes roll/pitch == 0 */
-      s.pos._value.qz = std::sin(yaw/2.);
+
+      /* XXX assumes roll/pitch == 0 */
+      qw = s.pos._value.qw;
+      qz = s.pos._value.qz;
+
+      dyaw = dt*s.vel[5] + dt2_2*s.acc[5] + dt3_6*s.jer[5];
+      if (fabs(dyaw) < 0.25) {
+        double dyaw2 = dyaw * dyaw;
+        dqw = 1 - dyaw2/8;		/* cos(dyaw/2) ± 1e-5 */
+        dqz = (0.5 - dyaw2/48) * dyaw;	/* sin(dyaw/2) ± 1e-6 */
+      } else {
+        dqw = std::cos(dyaw/2);
+        dqz = std::sin(dyaw/2);
+      }
+
+      s.pos._value.qw = dqw*qw - dqz*qz;
+      s.pos._value.qz = dqw*qz + dqz*qw;
     }
   }
 

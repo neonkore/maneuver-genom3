@@ -216,18 +216,31 @@ mv_exec_servo(maneuver_configuration_s *reference,
   maneuver_v6d &j = reference->jer;
 
   if (reference->pos._present) {
-    double yaw;
+    double dyaw, qw, qz, dqw, dqz;
 
     p.x += dt*v[0] + dt2_2*a[0] + dt3_6*j[0];
     p.y += dt*v[1] + dt2_2*a[1] + dt3_6*j[1];
     p.z += dt*v[2] + dt2_2*a[2] + dt3_6*j[2];
 
     /* XXX assumes roll/pitch == 0 */
-    yaw = 2 * atan2(p.qz, p.qw) + dt*v[5] + dt2_2*a[5] + dt3_6*j[5];
-    p.qw = std::cos(yaw/2.);
+    qw = p.qw;
+    qz = p.qz;
+
+    dyaw = dt*v[5] + dt2_2*a[5] + dt3_6*j[5];
+    if (fabs(dyaw) < 0.25) {
+      double dyaw2 = dyaw * dyaw;
+
+      dqw = 1 - dyaw2/8;		/* cos(dyaw/2) ± 1e-5 */
+      dqz = (0.5 - dyaw2/48) * dyaw;	/* sin(dyaw/2) ± 1e-6 */
+    } else {
+      dqw = std::cos(dyaw/2);
+      dqz = std::sin(dyaw/2);
+    }
+
+    p.qw = dqw*qw - dqz*qz;
     p.qx = 0.;
     p.qy = 0.;
-    p.qz = std::sin(yaw/2.);
+    p.qz = dqw*qz + dqz*qw;
   }
 
   for(i = 0; i < 6; i++) {
