@@ -324,7 +324,7 @@ mv_plan_velocity(const maneuver_planner_s *vplanner,
 
   e = mv_check_duration(lpath, duration, self);
   if (e) return e;
-  e = mv_sample_velocity(reference->pos, lpath, path, self);
+  e = mv_sample_velocity(reference->pos, reference->att, lpath, path, self);
   if (e) return e;
 
   gettimeofday(&tv2, NULL);

@@ -120,7 +120,9 @@ mv_current_state_read(const maneuver_state *state,
   if (!sdata) return maneuver_e_nostate(self);
 
   reference->pos = sdata->pos;
+  reference->att = sdata->att;
   if (!sdata->pos._present) return maneuver_e_nostate(self);
+  if (!sdata->att._present) return maneuver_e_nostate(self);
 
   /* disregard current velocity and acceleration - the residual noise
    * in those quantities generates weird trajectories */
@@ -159,8 +161,10 @@ mv_plan_take_off(const maneuver_planner_s *planner,
   from.position()[0] = p->x;
   from.position()[1] = p->y;
   from.position()[2] = p->z;
+
+  const or_t3d_att *q = &reference->att._value;
   from.position()[3] = atan2(
-    2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
+    2 * (q->qw*q->qz + q->qx*q->qy), 1 - 2 * (q->qy*q->qy + q->qz*q->qz));
 
   from.velocity()[0] = reference->vel[0];
   from.velocity()[1] = reference->vel[1];
@@ -239,13 +243,16 @@ mv_plan_goto(const maneuver_planner_s *planner,
   genom_event e;
 
   if (!reference->pos._present) return maneuver_e_nostate(self);
+  if (!reference->att._present) return maneuver_e_nostate(self);
 
   const or_t3d_pos *p = &reference->pos._value;
   from.position()[0] = p->x;
   from.position()[1] = p->y;
   from.position()[2] = p->z;
+
+  const or_t3d_att *q = &reference->att._value;
   from.position()[3] = atan2(
-    2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
+    2 * (q->qw*q->qz + q->qx*q->qy), 1 - 2 * (q->qy*q->qy + q->qz*q->qz));
 
   from.velocity()[0] = reference->vel[0];
   from.velocity()[1] = reference->vel[1];
@@ -312,13 +319,16 @@ mv_plan_waypoint(const maneuver_planner_s *planner,
   genom_event e;
 
   if (!reference->pos._present) return maneuver_e_nostate(self);
+  if (!reference->att._present) return maneuver_e_nostate(self);
 
   const or_t3d_pos *p = &reference->pos._value;
   from.position()[0] = p->x;
   from.position()[1] = p->y;
   from.position()[2] = p->z;
+
+  const or_t3d_att *q = &reference->att._value;
   from.position()[3] = atan2(
-    2 * (p->qw*p->qz + p->qx*p->qy), 1 - 2 * (p->qy*p->qy + p->qz*p->qz));
+    2 * (q->qw*q->qz + q->qx*q->qy), 1 - 2 * (q->qy*q->qy + q->qz*q->qz));
 
   from.velocity()[0] = reference->vel[0];
   from.velocity()[1] = reference->vel[1];
@@ -416,8 +426,9 @@ mv_replay_read(const maneuver_planner_s *planner,
   interp._release = NULL;
 
   s.pos._present = true;
-  s.pos._value.qx = 0.;
-  s.pos._value.qy = 0.;
+  s.att._present = true;
+  s.att._value.qx = 0.;
+  s.att._value.qy = 0.;
   for(i = 0; i < 6; i++) s.jer[i] = 0.;
 
   do {
@@ -442,8 +453,8 @@ mv_replay_read(const maneuver_planner_s *planner,
                &roll, &pitch, &yaw,
                &c);
     if (n != 6) continue; else l += c;
-    s.pos._value.qw = std::cos(yaw/2.);
-    s.pos._value.qz = std::sin(yaw/2.);
+    s.att._value.qw = std::cos(yaw/2.);
+    s.att._value.qz = std::sin(yaw/2.);
 
     /* read optional velocity */
     n = sscanf(l, "%lf %lf %lf %lf %lf %lf%n",
@@ -496,7 +507,7 @@ mv_replay_read(const maneuver_planner_s *planner,
     from.position()[0] = s0.pos._value.x;
     from.position()[1] = s0.pos._value.y;
     from.position()[2] = s0.pos._value.z;
-    from.position()[3] = 2 * atan2(s0.pos._value.qz, s0.pos._value.qw);
+    from.position()[3] = 2 * atan2(s0.att._value.qz, s0.att._value.qw);
 
     from.velocity()[0] = s0.vel[0];
     from.velocity()[1] = s0.vel[1];
@@ -511,7 +522,7 @@ mv_replay_read(const maneuver_planner_s *planner,
     to.position()[0] = s.pos._value.x;
     to.position()[1] = s.pos._value.y;
     to.position()[2] = s.pos._value.z;
-    to.position()[3] = 2 * atan2(s.pos._value.qz, s.pos._value.qw);
+    to.position()[3] = 2 * atan2(s.att._value.qz, s.att._value.qw);
 
     to.velocity()[0] = s.vel[0];
     to.velocity()[1] = s.vel[1];

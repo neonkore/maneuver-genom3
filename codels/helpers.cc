@@ -64,8 +64,9 @@ mv_sample_path(const kdtp::LocalPath &p,
   path->_length = i;
 
   s.pos._present = true;
-  s.pos._value.qx = 0.;
-  s.pos._value.qy = 0.;
+  s.att._present = true;
+  s.att._value.qx = 0.;
+  s.att._value.qy = 0.;
 
   s.vel[3] = 0.;
   s.vel[4] = 0.;
@@ -82,8 +83,8 @@ mv_sample_path(const kdtp::LocalPath &p,
     s.pos._value.x = q[0][0];
     s.pos._value.y = q[1][0];
     s.pos._value.z = q[2][0];
-    s.pos._value.qw = std::cos(q[3][0]/2.);
-    s.pos._value.qz = std::sin(q[3][0]/2.);
+    s.att._value.qw = std::cos(q[3][0]/2.);
+    s.att._value.qz = std::sin(q[3][0]/2.);
 
     s.vel[0] = q[0][1];
     s.vel[1] = q[1][1];
@@ -111,7 +112,8 @@ mv_sample_path(const kdtp::LocalPath &p,
  * --- sample velocity profile according to the exec task period -----------
  */
 genom_event
-mv_sample_velocity(const optional_or_t3d_pos &from, const kdtp::LocalPath &p,
+mv_sample_velocity(const optional_or_t3d_pos &fromp,
+                   const optional_or_t3d_att &fromq, const kdtp::LocalPath &p,
                    sequence_maneuver_configuration_s *path, genom_context self)
 {
   static const double dt = maneuver_control_period_ms/1000.;
@@ -129,7 +131,8 @@ mv_sample_velocity(const optional_or_t3d_pos &from, const kdtp::LocalPath &p,
   path->_length = i;
 
   printf("samples %zu\n", i);
-  s.pos = from;
+  s.pos = fromp;
+  s.att = fromq;
 
   s.vel[3] = 0.;
   s.vel[4] = 0.;
@@ -167,8 +170,8 @@ mv_sample_velocity(const optional_or_t3d_pos &from, const kdtp::LocalPath &p,
       s.pos._value.z += dt*s.vel[2] + dt2_2*s.acc[2] + dt3_6*s.jer[2];
 
       /* XXX assumes roll/pitch == 0 */
-      qw = s.pos._value.qw;
-      qz = s.pos._value.qz;
+      qw = s.att._value.qw;
+      qz = s.att._value.qz;
 
       dyaw = dt*s.vel[5] + dt2_2*s.acc[5] + dt3_6*s.jer[5];
       if (fabs(dyaw) < 0.25) {
@@ -180,8 +183,8 @@ mv_sample_velocity(const optional_or_t3d_pos &from, const kdtp::LocalPath &p,
         dqz = std::sin(dyaw/2);
       }
 
-      s.pos._value.qw = dqw*qw - dqz*qz;
-      s.pos._value.qz = dqw*qz + dqz*qw;
+      s.att._value.qw = dqw*qw - dqz*qz;
+      s.att._value.qz = dqw*qz + dqz*qw;
     }
   }
 

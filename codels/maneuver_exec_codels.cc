@@ -58,14 +58,22 @@ mv_exec_start(maneuver_configuration_s *reference,
   ddata->ts.nsec = 1000*tv.tv_usec;
   ddata->intrinsic = false;
   ddata->pos._present = false;
+  ddata->att._present = false;
   ddata->pos_cov._present = false;
+  ddata->att_cov._present = false;
+  ddata->att_pos_cov._present = false;
   ddata->vel._present = false;
   ddata->vel_cov._present = false;
+  ddata->avel._present = false;
+  ddata->avel_cov._present = false;
   ddata->acc._present = false;
   ddata->acc_cov._present = false;
+  ddata->aacc._present = false;
+  ddata->aacc_cov._present = false;
   desired->write(self);
 
   reference->pos._present = false;
+  reference->att._present = false;
   for(i = 0; i < 6; i++) {
     reference->vel[i] = 0.;
     reference->acc[i] = 0.;
@@ -110,7 +118,7 @@ mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
 
   /* no motion */
   ddata = desired->data(self);
-  if (ddata->vel._present || ddata->acc._present) {
+  if (ddata->vel._present || ddata->avel._present || ddata->acc._present) {
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
@@ -119,6 +127,7 @@ mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
     ddata->ts.nsec = 1000*tv.tv_usec;
 
     ddata->vel._present = false;
+    ddata->avel._present = false;
     ddata->acc._present = false;
 
     desired->write(self);
@@ -161,14 +170,17 @@ mv_exec_path(maneuver_ids_trajectory_t *trajectory,
   ddata->ts.nsec = 1000*tv.tv_usec;
 
   ddata->pos = s.pos;
+  ddata->att = s.att;
 
   ddata->vel._present = true;
   ddata->vel._value.vx = s.vel[0];
   ddata->vel._value.vy = s.vel[1];
   ddata->vel._value.vz = s.vel[2];
-  ddata->vel._value.wx = s.vel[3];
-  ddata->vel._value.wy = s.vel[4];
-  ddata->vel._value.wz = s.vel[5];
+
+  ddata->avel._present = true;
+  ddata->avel._value.wx = s.vel[3];
+  ddata->avel._value.wy = s.vel[4];
+  ddata->avel._value.wz = s.vel[5];
 
   ddata->acc._present = true;
   ddata->acc._value.ax = s.acc[0];
@@ -211,11 +223,12 @@ mv_exec_servo(maneuver_configuration_s *reference,
 
   /* integration */
   or_t3d_pos &p = reference->pos._value;
+  or_t3d_att &q = reference->att._value;
   maneuver_v6d &v = reference->vel;
   maneuver_v6d &a = reference->acc;
   maneuver_v6d &j = reference->jer;
 
-  if (reference->pos._present) {
+  if (reference->pos._present && reference->att._present) {
     double dyaw, qw, qz, dqw, dqz;
 
     p.x += dt*v[0] + dt2_2*a[0] + dt3_6*j[0];
@@ -223,8 +236,8 @@ mv_exec_servo(maneuver_configuration_s *reference,
     p.z += dt*v[2] + dt2_2*a[2] + dt3_6*j[2];
 
     /* XXX assumes roll/pitch == 0 */
-    qw = p.qw;
-    qz = p.qz;
+    qw = q.qw;
+    qz = q.qz;
 
     dyaw = dt*v[5] + dt2_2*a[5] + dt3_6*j[5];
     if (fabs(dyaw) < 0.25) {
@@ -237,10 +250,10 @@ mv_exec_servo(maneuver_configuration_s *reference,
       dqz = std::sin(dyaw/2);
     }
 
-    p.qw = dqw*qw - dqz*qz;
-    p.qx = 0.;
-    p.qy = 0.;
-    p.qz = dqw*qz + dqz*qw;
+    q.qw = dqw*qw - dqz*qz;
+    q.qx = 0.;
+    q.qy = 0.;
+    q.qz = dqw*qz + dqz*qw;
   }
 
   for(i = 0; i < 6; i++) {
@@ -256,14 +269,17 @@ mv_exec_servo(maneuver_configuration_s *reference,
   ddata->ts.nsec = 1000*tv.tv_usec;
 
   ddata->pos = reference->pos;
+  ddata->att = reference->att;
 
   ddata->vel._present = true;
   ddata->vel._value.vx = v[0];
   ddata->vel._value.vy = v[1];
   ddata->vel._value.vz = v[2];
-  ddata->vel._value.wx = v[3];
-  ddata->vel._value.wy = v[4];
-  ddata->vel._value.wz = v[5];
+
+  ddata->avel._present = true;
+  ddata->avel._value.wx = v[3];
+  ddata->avel._value.wy = v[4];
+  ddata->avel._value.wz = v[5];
 
   ddata->acc._present = true;
   ddata->acc._value.ax = a[0];
@@ -320,10 +336,10 @@ mv_exec_log(const or_time_ts &ts,
 
   if (log->req.aio_fildes >= 0 && !log->pending) {
     const double
-      qw = s.pos._value.qw,
-      qx = s.pos._value.qx,
-      qy = s.pos._value.qy,
-      qz = s.pos._value.qz;
+      qw = s.att._value.qw,
+      qx = s.att._value.qx,
+      qy = s.att._value.qy,
+      qz = s.att._value.qz;
     const double yaw = atan2(2 * (qw*qz + qx*qy), 1 - 2 * (qy*qy + qz*qz));
 
     log->req.aio_nbytes = snprintf(

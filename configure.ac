@@ -18,7 +18,7 @@ dnl
 
 AC_PREREQ(2.59)
 
-AC_INIT([maneuver-genom3],[1.3],[openrobots@laas.fr])
+AC_INIT([maneuver-genom3],[2.0],[openrobots@laas.fr])
 AC_CONFIG_MACRO_DIR([autoconf])
 AC_CONFIG_AUX_DIR([autoconf])
 AC_CONFIG_HEADERS([autoconf/acmaneuver.h])
@@ -26,7 +26,7 @@ AM_INIT_AUTOMAKE([foreign no-define])
 
 dnl Compilers
 dnl
-LT_INIT
+LT_INIT([disable-static])
 AC_PROG_CC
 AC_PROG_CXX
 
@@ -40,7 +40,7 @@ AC_LANG_POP
 dnl External packages
 PKG_CHECK_MODULES(requires, [
   genom3 >= 2.99.4
-  openrobots-idl >= 1.2
+  openrobots2-idl >= 2.0
   libkdtp >= 1.2
 ])
 
