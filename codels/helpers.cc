@@ -49,34 +49,48 @@ mv_check_duration(const kdtp::LocalPath &p, const double duration,
  */
 genom_event
 mv_sample_path(const kdtp::LocalPath &p,
-               sequence_maneuver_configuration_s *path, genom_context self)
+               sequence_or_rigid_body_state *path, genom_context self)
 {
   static const double dt = maneuver_control_period_ms/1000.;
 
-  maneuver_configuration_s s;
+  or_rigid_body_state s;
   double q[4][5];
   size_t i;
 
+  /* set path length, including start & end configurations */
   i = 2 + p.duration()/dt;
   if (path->_maximum < i || path->_maximum > 2 * i)
     if (genom_sequence_reserve(path, i))
       return mv_e_sys_error(NULL, self);
   path->_length = i;
 
+
+  /* fill constant fields along path */
+  s.ts.sec = 0;
+  s.ts.nsec = 0;
+  s.intrinsic = false;
+
   s.pos._present = true;
   s.att._present = true;
   s.att._value.qx = 0.;
   s.att._value.qy = 0.;
 
-  s.vel[3] = 0.;
-  s.vel[4] = 0.;
+  s.vel._present = true;
+  s.avel._present = true;
+  s.avel._value.wx = 0;
+  s.avel._value.wy = 0;
 
-  s.acc[3] = 0.;
-  s.acc[4] = 0.;
+  s.acc._present = true;
+  s.aacc._present = true;
+  s.aacc._value.awx = 0.;
+  s.aacc._value.awy = 0.;
 
-  s.jer[3] = 0.;
-  s.jer[4] = 0.;
+  s.jerk._present = true;
 
+  s.snap._present = true;
+
+
+  /* interpolate path */
   for(i = 0; i < path->_length; i++) {
     p.getAllAt(i * dt, q);
 
@@ -86,20 +100,23 @@ mv_sample_path(const kdtp::LocalPath &p,
     s.att._value.qw = std::cos(q[3][0]/2.);
     s.att._value.qz = std::sin(q[3][0]/2.);
 
-    s.vel[0] = q[0][1];
-    s.vel[1] = q[1][1];
-    s.vel[2] = q[2][1];
-    s.vel[5] = q[3][1];
+    s.vel._value.vx = q[0][1];
+    s.vel._value.vy = q[1][1];
+    s.vel._value.vz = q[2][1];
+    s.avel._value.wz = q[3][1];
 
-    s.acc[0] = q[0][2];
-    s.acc[1] = q[1][2];
-    s.acc[2] = q[2][2];
-    s.acc[5] = q[3][2];
+    s.acc._value.ax = q[0][2];
+    s.acc._value.ay = q[1][2];
+    s.acc._value.az = q[2][2];
+    s.aacc._value.awz = q[3][2];
 
-    s.jer[0] = q[0][3];
-    s.jer[1] = q[1][3];
-    s.jer[2] = q[2][3];
-    s.jer[5] = q[3][3];
+    s.jerk._value.jx = q[0][3];
+    s.jerk._value.jy = q[1][3];
+    s.jerk._value.jz = q[2][3];
+
+    s.snap._value.sx = q[0][4];
+    s.snap._value.sy = q[1][4];
+    s.snap._value.sz = q[2][4];
 
     path->_buffer[i] = s;
   }
@@ -114,66 +131,84 @@ mv_sample_path(const kdtp::LocalPath &p,
 genom_event
 mv_sample_velocity(const optional_or_t3d_pos &fromp,
                    const optional_or_t3d_att &fromq, const kdtp::LocalPath &p,
-                   sequence_maneuver_configuration_s *path, genom_context self)
+                   sequence_or_rigid_body_state *path, genom_context self)
 {
   static const double dt = maneuver_control_period_ms/1000.;
   static const double dt2_2 = dt*dt/2.;
   static const double dt3_6 = dt*dt2_2/3.;
 
-  maneuver_configuration_s s;
+  or_rigid_body_state s;
   double q[4][5];
   double dyaw, qw, qz, dqw, dqz;
   size_t i;
 
+  /* set path length, including start & end configurations */
   i = 2 + p.duration()/dt;
   if (path->_maximum < i || path->_maximum > 2 * i)
     if (genom_sequence_reserve(path, i)) return maneuver_e_sys(NULL, self);
   path->_length = i;
-
   printf("samples %zu\n", i);
+
+
+  /* fill constant fields along path */
+  s.ts.sec = 0;
+  s.ts.nsec = 0;
+  s.intrinsic = false;
+
   s.pos = fromp;
   s.att = fromq;
 
-  s.vel[3] = 0.;
-  s.vel[4] = 0.;
+  s.vel._present = true;
+  s.avel._present = true;
+  s.avel._value.wx = 0;
+  s.avel._value.wy = 0;
 
-  s.acc[3] = 0.;
-  s.acc[4] = 0.;
+  s.acc._present = true;
+  s.aacc._present = true;
+  s.aacc._value.awx = 0.;
+  s.aacc._value.awy = 0.;
 
-  s.jer[3] = 0.;
-  s.jer[4] = 0.;
+  s.jerk._present = true;
+
+  s.snap._present = true;
 
   for(i = 0; i < path->_length; i++) {
     p.getAllAt(i * dt, q);
 
-    s.vel[0] = q[0][0];
-    s.vel[1] = q[1][0];
-    s.vel[2] = q[2][0];
-    s.vel[5] = q[3][0];
+    s.vel._value.vx = q[0][0];
+    s.vel._value.vy = q[1][0];
+    s.vel._value.vz = q[2][0];
+    s.avel._value.wz = q[3][0];
 
-    s.acc[0] = q[0][1];
-    s.acc[1] = q[1][1];
-    s.acc[2] = q[2][1];
-    s.acc[5] = q[3][1];
+    s.acc._value.ax = q[0][1];
+    s.acc._value.ay = q[1][1];
+    s.acc._value.az = q[2][1];
+    s.aacc._value.awz = q[3][1];
 
-    s.jer[0] = q[0][2];
-    s.jer[1] = q[1][2];
-    s.jer[2] = q[2][2];
-    s.jer[5] = q[3][2];
+    s.jerk._value.jx = q[0][2];
+    s.jerk._value.jy = q[1][2];
+    s.jerk._value.jz = q[2][2];
+
+    s.snap._value.sx = q[0][3];
+    s.snap._value.sy = q[1][3];
+    s.snap._value.sz = q[2][3];
 
     path->_buffer[i] = s;
 
     /* integrate position if needed */
     if (s.pos._present) {
-      s.pos._value.x += dt*s.vel[0] + dt2_2*s.acc[0] + dt3_6*s.jer[0];
-      s.pos._value.y += dt*s.vel[1] + dt2_2*s.acc[1] + dt3_6*s.jer[1];
-      s.pos._value.z += dt*s.vel[2] + dt2_2*s.acc[2] + dt3_6*s.jer[2];
+      s.pos._value.x +=
+        dt*s.vel._value.vx + dt2_2*s.acc._value.ax + dt3_6*s.jerk._value.jx;
+      s.pos._value.y +=
+        dt*s.vel._value.vy + dt2_2*s.acc._value.ay + dt3_6*s.jerk._value.jy;
+      s.pos._value.z +=
+        dt*s.vel._value.vz + dt2_2*s.acc._value.az + dt3_6*s.jerk._value.jz;
 
       /* XXX assumes roll/pitch == 0 */
       qw = s.att._value.qw;
       qz = s.att._value.qz;
 
-      dyaw = dt*s.vel[5] + dt2_2*s.acc[5] + dt3_6*s.jer[5];
+      dyaw = dt*s.avel._value.wz + dt2_2*s.aacc._value.awz;
       if (fabs(dyaw) < 0.25) {
         double dyaw2 = dyaw * dyaw;
         dqw = 1 - dyaw2/8;		/* cos(dyaw/2) ± 1e-5 */

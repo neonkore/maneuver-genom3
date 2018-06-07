@@ -109,11 +109,10 @@ mv_plan_stop(maneuver_ids *ids, const genom_context self)
  */
 genom_event
 mv_current_state_read(const maneuver_state *state,
-                      maneuver_configuration_s *reference,
+                      or_rigid_body_state *reference,
                       const genom_context self)
 {
   or_pose_estimator_state *sdata;
-  int i;
 
   if (state->read(self) != genom_ok) return maneuver_e_nostate(self);
   sdata = state->data(self);
@@ -126,11 +125,11 @@ mv_current_state_read(const maneuver_state *state,
 
   /* disregard current velocity and acceleration - the residual noise
    * in those quantities generates weird trajectories */
-  for(i = 0; i < 6; i++) {
-    reference->vel[i] = 0.;
-    reference->acc[i] = 0.;
-    reference->jer[i] = 0.;
-  }
+  reference->vel._present = false;
+  reference->avel._present = false;
+  reference->acc._present = false;
+  reference->aacc._present = false;
+  reference->jerk._present = false;
 
   return maneuver_ether;
 }
@@ -146,9 +145,8 @@ mv_current_state_read(const maneuver_state *state,
  */
 genom_event
 mv_plan_take_off(const maneuver_planner_s *planner,
-                 const maneuver_configuration_s *reference,
-                 double height, double duration,
-                 sequence_maneuver_configuration_s *path,
+                 const or_rigid_body_state *reference, double height,
+                 double duration, sequence_or_rigid_body_state *path,
                  const genom_context self)
 {
   kdtp::State from(planner->robot);
@@ -156,6 +154,7 @@ mv_plan_take_off(const maneuver_planner_s *planner,
   genom_event e;
 
   if (!reference->pos._present) return maneuver_e_nostate(self);
+  if (!reference->att._present) return maneuver_e_nostate(self);
 
   const or_t3d_pos *p = &reference->pos._value;
   from.position()[0] = p->x;
@@ -166,15 +165,23 @@ mv_plan_take_off(const maneuver_planner_s *planner,
   from.position()[3] = atan2(
     2 * (q->qw*q->qz + q->qx*q->qy), 1 - 2 * (q->qy*q->qy + q->qz*q->qz));
 
-  from.velocity()[0] = reference->vel[0];
-  from.velocity()[1] = reference->vel[1];
-  from.velocity()[2] = reference->vel[2];
-  from.velocity()[3] = reference->vel[5];
+  if (reference->vel._present) {
+    from.velocity()[0] = reference->vel._value.vx;
+    from.velocity()[1] = reference->vel._value.vy;
+    from.velocity()[2] = reference->vel._value.vz;
+  }
+  if (reference->avel._present) {
+    from.velocity()[3] = reference->avel._value.wz;
+  }
 
-  from.acceleration()[0] = reference->acc[0];
-  from.acceleration()[1] = reference->acc[1];
-  from.acceleration()[2] = reference->acc[2];
-  from.acceleration()[3] = reference->acc[5];
+  if (reference->acc._present) {
+    from.acceleration()[0] = reference->acc._value.ax;
+    from.acceleration()[1] = reference->acc._value.ay;
+    from.acceleration()[2] = reference->acc._value.az;
+  }
+  if (reference->aacc._present) {
+    from.acceleration()[3] = reference->aacc._value.awz;
+  }
 
   to.position() = from.position();
   to.position()[2] = height;
@@ -196,8 +203,8 @@ mv_plan_take_off(const maneuver_planner_s *planner,
  * Throws maneuver_e_nostate, maneuver_e_limits.
  */
 genom_event
-mv_plan_exec(const sequence_maneuver_configuration_s *path,
-             maneuver_configuration_s *reference,
+mv_plan_exec(const sequence_or_rigid_body_state *path,
+             or_rigid_body_state *reference,
              maneuver_ids_trajectory_t *trajectory,
              const genom_context self)
 {
@@ -233,9 +240,9 @@ mv_plan_wait(const maneuver_ids_trajectory_t *trajectory,
  */
 genom_event
 mv_plan_goto(const maneuver_planner_s *planner,
-             const maneuver_configuration_s *reference, double x,
-             double y, double z, double yaw, double duration,
-             sequence_maneuver_configuration_s *path,
+             const or_rigid_body_state *reference, double x, double y,
+             double z, double yaw, double duration,
+             sequence_or_rigid_body_state *path,
              const genom_context self)
 {
   kdtp::State from(planner->robot);
@@ -254,15 +261,23 @@ mv_plan_goto(const maneuver_planner_s *planner,
   from.position()[3] = atan2(
     2 * (q->qw*q->qz + q->qx*q->qy), 1 - 2 * (q->qy*q->qy + q->qz*q->qz));
 
-  from.velocity()[0] = reference->vel[0];
-  from.velocity()[1] = reference->vel[1];
-  from.velocity()[2] = reference->vel[2];
-  from.velocity()[3] = reference->vel[5];
+  if (reference->vel._present) {
+    from.velocity()[0] = reference->vel._value.vx;
+    from.velocity()[1] = reference->vel._value.vy;
+    from.velocity()[2] = reference->vel._value.vz;
+  }
+  if (reference->avel._present) {
+    from.velocity()[3] = reference->avel._value.wz;
+  }
 
-  from.acceleration()[0] = reference->acc[0];
-  from.acceleration()[1] = reference->acc[1];
-  from.acceleration()[2] = reference->acc[2];
-  from.acceleration()[3] = reference->acc[5];
+  if (reference->acc._present) {
+    from.acceleration()[0] = reference->acc._value.ax;
+    from.acceleration()[1] = reference->acc._value.ay;
+    from.acceleration()[2] = reference->acc._value.az;
+  }
+  if (reference->aacc._present) {
+    from.acceleration()[3] = reference->aacc._value.awz;
+  }
 
   to.position()[0] = x;
   to.position()[1] = y;
@@ -307,11 +322,10 @@ mv_plan_goto(const maneuver_planner_s *planner,
  */
 genom_event
 mv_plan_waypoint(const maneuver_planner_s *planner,
-                 const maneuver_configuration_s *reference, double x,
+                 const or_rigid_body_state *reference, double x,
                  double y, double z, double yaw, double vx, double vy,
                  double vz, double wz, double ax, double ay, double az,
-                 double duration,
-                 sequence_maneuver_configuration_s *path,
+                 double duration, sequence_or_rigid_body_state *path,
                  const genom_context self)
 {
   kdtp::State from(planner->robot);
@@ -330,15 +344,23 @@ mv_plan_waypoint(const maneuver_planner_s *planner,
   from.position()[3] = atan2(
     2 * (q->qw*q->qz + q->qx*q->qy), 1 - 2 * (q->qy*q->qy + q->qz*q->qz));
 
-  from.velocity()[0] = reference->vel[0];
-  from.velocity()[1] = reference->vel[1];
-  from.velocity()[2] = reference->vel[2];
-  from.velocity()[3] = reference->vel[5];
+  if (reference->vel._present) {
+    from.velocity()[0] = reference->vel._value.vx;
+    from.velocity()[1] = reference->vel._value.vy;
+    from.velocity()[2] = reference->vel._value.vz;
+  }
+  if (reference->avel._present) {
+    from.velocity()[3] = reference->avel._value.wz;
+  }
 
-  from.acceleration()[0] = reference->acc[0];
-  from.acceleration()[1] = reference->acc[1];
-  from.acceleration()[2] = reference->acc[2];
-  from.acceleration()[3] = reference->acc[5];
+  if (reference->acc._present) {
+    from.acceleration()[0] = reference->acc._value.ax;
+    from.acceleration()[1] = reference->acc._value.ay;
+    from.acceleration()[2] = reference->acc._value.az;
+  }
+  if (reference->aacc._present) {
+    from.acceleration()[3] = reference->aacc._value.awz;
+  }
 
   to.position()[0] = x;
   to.position()[1] = y;
@@ -397,13 +419,13 @@ mv_no_wait(const genom_context self)
 genom_event
 mv_replay_read(const maneuver_planner_s *planner,
                const char filename[128],
-               sequence_maneuver_configuration_s *path,
+               sequence_or_rigid_body_state *path,
                const genom_context self)
 {
-  sequence_maneuver_configuration_s interp;
+  sequence_or_rigid_body_state interp;
   kdtp::State from(planner->robot);
   kdtp::State to(planner->robot);
-  maneuver_configuration_s s;
+  or_rigid_body_state s;
 
   char line[1024];
   double now, dt;
@@ -425,11 +447,15 @@ mv_replay_read(const maneuver_planner_s *planner,
   interp._buffer = NULL;
   interp._release = NULL;
 
+  s.ts.sec = 0;
+  s.ts.nsec = 0;
+  s.intrinsic = false;
   s.pos._present = true;
   s.att._present = true;
   s.att._value.qx = 0.;
   s.att._value.qy = 0.;
-  for(i = 0; i < 6; i++) s.jer[i] = 0.;
+  s.jerk._present = false;
+  s.snap._present = false;
 
   do {
     /* get next line */
@@ -458,23 +484,24 @@ mv_replay_read(const maneuver_planner_s *planner,
 
     /* read optional velocity */
     n = sscanf(l, "%lf %lf %lf %lf %lf %lf%n",
-               &s.vel[0], &s.vel[1], &s.vel[2],
-               &s.vel[3], &s.vel[4], &s.vel[5],
+               &s.vel._value.vx, &s.vel._value.vy, &s.vel._value.vz,
+               &s.avel._value.wx, &s.avel._value.wy, &s.avel._value.wz,
                &c);
     if (n == 6) {
       l += c;
+      s.vel._present = s.avel._present = true;
 
       /* read optional acceleration */
       n = sscanf(l, "%lf %lf %lf %lf %lf %lf%n",
-                 &s.acc[0], &s.acc[1], &s.acc[2],
-                 &s.acc[3], &s.acc[4], &s.acc[5],
+                 &s.acc._value.ax, &s.acc._value.ax, &s.acc._value.ax,
+                 &s.aacc._value.awx, &s.aacc._value.awx, &s.aacc._value.awx,
                  &c);
       if (n != 6) {
-        for(i = 0; i < 6; i++) s.acc[i] = 0.;
+        s.acc._present = s.aacc._present = false;
       }
     } else {
-      for(i = 0; i < 6; i++) s.vel[i] = 0.;
-      for(i = 0; i < 6; i++) s.acc[i] = 0.;
+      s.vel._present = s.avel._present = false;
+      s.acc._present = s.aacc._present = false;
     }
 
     /* resize path if needed */
@@ -503,36 +530,52 @@ mv_replay_read(const maneuver_planner_s *planner,
     }
 
     /* interpolate sample at too low frequency */
-    const maneuver_configuration_s &s0 = path->_buffer[path->_length - 1];
+    const or_rigid_body_state &s0 = path->_buffer[path->_length - 1];
     from.position()[0] = s0.pos._value.x;
     from.position()[1] = s0.pos._value.y;
     from.position()[2] = s0.pos._value.z;
     from.position()[3] = 2 * atan2(s0.att._value.qz, s0.att._value.qw);
 
-    from.velocity()[0] = s0.vel[0];
-    from.velocity()[1] = s0.vel[1];
-    from.velocity()[2] = s0.vel[2];
-    from.velocity()[3] = s0.vel[5];
+    if (s0.vel._present) {
+      from.velocity()[0] = s0.vel._value.vx;
+      from.velocity()[1] = s0.vel._value.vy;
+      from.velocity()[2] = s0.vel._value.vz;
+    }
+    if (s0.avel._present) {
+      from.velocity()[3] = s0.avel._value.wz;
+    }
 
-    from.acceleration()[0] = s0.acc[0];
-    from.acceleration()[1] = s0.acc[1];
-    from.acceleration()[2] = s0.acc[2];
-    from.acceleration()[3] = s0.acc[5];
+    if (s0.acc._present) {
+      from.acceleration()[0] = s0.acc._value.ax;
+      from.acceleration()[1] = s0.acc._value.ay;
+      from.acceleration()[2] = s0.acc._value.az;
+    }
+    if (s0.aacc._present) {
+      from.acceleration()[3] = s0.aacc._value.awz;
+    }
 
     to.position()[0] = s.pos._value.x;
     to.position()[1] = s.pos._value.y;
     to.position()[2] = s.pos._value.z;
     to.position()[3] = 2 * atan2(s.att._value.qz, s.att._value.qw);
 
-    to.velocity()[0] = s.vel[0];
-    to.velocity()[1] = s.vel[1];
-    to.velocity()[2] = s.vel[2];
-    to.velocity()[3] = s.vel[5];
+    if (s.vel._present) {
+      to.velocity()[0] = s.vel._value.vx;
+      to.velocity()[1] = s.vel._value.vy;
+      to.velocity()[2] = s.vel._value.vz;
+    }
+    if (s.avel._present) {
+      to.velocity()[3] = s.avel._value.wz;
+    }
 
-    to.acceleration()[0] = s.acc[0];
-    to.acceleration()[1] = s.acc[1];
-    to.acceleration()[2] = s.acc[2];
-    to.acceleration()[3] = s.acc[5];
+    if (s.acc._present) {
+      to.acceleration()[0] = s.acc._value.ax;
+      to.acceleration()[1] = s.acc._value.ay;
+      to.acceleration()[2] = s.acc._value.az;
+    }
+    if (s.aacc._present) {
+      to.acceleration()[3] = s.aacc._value.awz;
+    }
 
     kdtp::LocalPath lpath(planner->robot, from, to, dt);
 
@@ -597,8 +640,8 @@ mv_replay_read(const maneuver_planner_s *planner,
  */
 genom_event
 mv_plan_zero(const maneuver_planner_s *vplanner,
-             const maneuver_configuration_s *reference,
-             sequence_maneuver_configuration_s *path,
+             const or_rigid_body_state *reference,
+             sequence_or_rigid_body_state *path,
              const genom_context self)
 {
   genom_event e;

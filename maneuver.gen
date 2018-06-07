@@ -17,6 +17,7 @@
 #pragma require "openrobots2-idl >= 2.0"
 
 #include "or/pose/pose_estimator.gen"
+#include "or/pose/rigid_body.gen"
 
 component maneuver {
   version		"2.0";
@@ -27,7 +28,7 @@ component maneuver {
   uses		or_pose_estimator;
 
   port in	or_pose_estimator::state state;
-  port out	or_pose_estimator::state desired;
+  port out	or_rigid_body::state desired;
 
   exception e_nostate;
   exception e_limits;
@@ -36,26 +37,16 @@ component maneuver {
   native planner_s;
   native log_s;
 
-  typedef double v6d[6];
-
-  struct configuration_s {
-    optional<or::t3d::pos> pos;
-    optional<or::t3d::att> att;
-    v6d vel;
-    v6d acc;
-    v6d jer;
-  };
-
   enum motion { idling, moving };
 
   ids {
     planner_s planner;		/* trajectory planner */
     planner_s vplanner;		/* velocity planner */
 
-    configuration_s reference;
+    or_rigid_body::state reference;
 
     struct trajectory_t {
-      sequence<configuration_s> t;
+      sequence<or_rigid_body::state> t;
       unsigned long i;
     } trajectory;
 
@@ -131,7 +122,7 @@ component maneuver {
     doc		"Vertical take-off from current state";
     task	plan;
 
-    local sequence<configuration_s> path;
+    local sequence<or_rigid_body::state> path;
 
     validate mv_plan_cancel(inout trajectory, out reference);
 
@@ -152,7 +143,7 @@ component maneuver {
     doc		"Reach a given position from current state";
     task	plan;
 
-    local sequence<configuration_s> path;
+    local sequence<or_rigid_body::state> path;
 
     validate mv_plan_cancel(inout trajectory, out reference);
 
@@ -175,7 +166,7 @@ component maneuver {
     doc		"Push a given position to reach after last one";
     task	plan;
 
-    local sequence<configuration_s> path;
+    local sequence<or_rigid_body::state> path;
 
     codel<start> mv_plan_waypoint(in planner, in reference,
                                   in x, in y, in z, in yaw,
@@ -197,7 +188,7 @@ component maneuver {
                     in double duration) {
     doc		"Reach a desired velocity within a given duration";
 
-    local sequence<configuration_s> path;
+    local sequence<or_rigid_body::state> path;
 
     validate mv_plan_cancel(inout trajectory, out reference);
 
@@ -216,7 +207,7 @@ component maneuver {
     doc "Replay a trajectory log file";
     task plan;
 
-    local sequence<configuration_s> path;
+    local sequence<or_rigid_body::state> path;
 
     validate mv_plan_cancel(inout trajectory, out reference);
 
@@ -243,7 +234,7 @@ component maneuver {
     doc		"Cancel any motion and set the desired state to empty";
     task	plan;
 
-    local sequence<configuration_s> path;
+    local sequence<or_rigid_body::state> path;
 
     validate mv_plan_cancel(inout trajectory, out reference);
 

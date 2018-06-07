@@ -29,7 +29,7 @@
 #include "codels.h"
 
 static void	mv_exec_log(const or_time_ts &ts,
-                            const maneuver_configuration_s &s,
+                            const or_rigid_body_state &s,
                             maneuver_log_s *log);
 
 
@@ -42,14 +42,13 @@ static void	mv_exec_log(const or_time_ts &ts,
  * Yields to maneuver_wait.
  */
 genom_event
-mv_exec_start(maneuver_configuration_s *reference,
+mv_exec_start(or_rigid_body_state *reference,
               maneuver_ids_trajectory_t *trajectory,
               const maneuver_desired *desired,
               const genom_context self)
 {
-  or_pose_estimator_state *ddata;
+  or_rigid_body_state *ddata;
   struct timeval tv;
-  int i;
 
   gettimeofday(&tv, NULL);
 
@@ -59,26 +58,25 @@ mv_exec_start(maneuver_configuration_s *reference,
   ddata->intrinsic = false;
   ddata->pos._present = false;
   ddata->att._present = false;
-  ddata->pos_cov._present = false;
-  ddata->att_cov._present = false;
-  ddata->att_pos_cov._present = false;
   ddata->vel._present = false;
-  ddata->vel_cov._present = false;
   ddata->avel._present = false;
-  ddata->avel_cov._present = false;
   ddata->acc._present = false;
-  ddata->acc_cov._present = false;
   ddata->aacc._present = false;
-  ddata->aacc_cov._present = false;
+  ddata->jerk._present = false;
+  ddata->snap._present = false;
   desired->write(self);
 
+  reference->ts.sec = 0;
+  reference->ts.nsec = 0;
+  reference->intrinsic = false;
   reference->pos._present = false;
   reference->att._present = false;
-  for(i = 0; i < 6; i++) {
-    reference->vel[i] = 0.;
-    reference->acc[i] = 0.;
-    reference->jer[i] = 0.;
-  }
+  reference->vel._present = false;
+  reference->avel._present = false;
+  reference->acc._present = false;
+  reference->aacc._present = false;
+  reference->jerk._present = false;
+  reference->snap._present = false;
 
   trajectory->t._length = 0;
   trajectory->i = 0;
@@ -95,12 +93,11 @@ mv_exec_start(maneuver_configuration_s *reference,
  */
 genom_event
 mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
-             const maneuver_configuration_s *reference,
+             const or_rigid_body_state *reference,
              const maneuver_desired *desired,
              const genom_context self)
 {
-  or_pose_estimator_state *ddata;
-  int i;
+  or_rigid_body_state *ddata;
 
   /* if there is a trajectory, play it */
   if (trajectory->t._length > 0)
@@ -108,12 +105,11 @@ mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
 
 
   /* servo on a reference vel/acc/jer */
-  for(i = 0; i < 6; i++)
-    if (fabs(reference->vel[i]) > 1e-4) return maneuver_servo;
-  for(i = 0; i < 6; i++)
-    if (fabs(reference->acc[i]) > 1e-3) return maneuver_servo;
-  for(i = 0; i < 6; i++)
-    if (fabs(reference->jer[i]) > 1e-2) return maneuver_servo;
+  if (reference->vel._present) return maneuver_servo;
+  if (reference->avel._present) return maneuver_servo;
+  if (reference->acc._present) return maneuver_servo;
+  if (reference->aacc._present) return maneuver_servo;
+  if (reference->jerk._present) return maneuver_servo;
 
 
   /* no motion */
@@ -129,6 +125,9 @@ mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
     ddata->vel._present = false;
     ddata->avel._present = false;
     ddata->acc._present = false;
+    ddata->aacc._present = false;
+    ddata->jerk._present = false;
+    ddata->snap._present = false;
 
     desired->write(self);
 
@@ -147,11 +146,11 @@ mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
  */
 genom_event
 mv_exec_path(maneuver_ids_trajectory_t *trajectory,
-             const maneuver_configuration_s *reference,
+             const or_rigid_body_state *reference,
              const maneuver_desired *desired, maneuver_log_s **log,
              const genom_context self)
 {
-  or_pose_estimator_state *ddata;
+  or_rigid_body_state *ddata;
   struct timeval tv;
 
   /* done? */
@@ -160,32 +159,15 @@ mv_exec_path(maneuver_ids_trajectory_t *trajectory,
     trajectory->i = 0;
     return maneuver_wait;
   }
-  maneuver_configuration_s &s = trajectory->t._buffer[trajectory->i];
+  or_rigid_body_state &s = trajectory->t._buffer[trajectory->i];
 
   /* publish */
+  gettimeofday(&tv, NULL);
   ddata = desired->data(self);
 
-  gettimeofday(&tv, NULL);
+  *ddata = s;
   ddata->ts.sec = tv.tv_sec;
   ddata->ts.nsec = 1000*tv.tv_usec;
-
-  ddata->pos = s.pos;
-  ddata->att = s.att;
-
-  ddata->vel._present = true;
-  ddata->vel._value.vx = s.vel[0];
-  ddata->vel._value.vy = s.vel[1];
-  ddata->vel._value.vz = s.vel[2];
-
-  ddata->avel._present = true;
-  ddata->avel._value.wx = s.vel[3];
-  ddata->avel._value.wy = s.vel[4];
-  ddata->avel._value.wz = s.vel[5];
-
-  ddata->acc._present = true;
-  ddata->acc._value.ax = s.acc[0];
-  ddata->acc._value.ay = s.acc[1];
-  ddata->acc._value.az = s.acc[2];
 
   desired->write(self);
 
@@ -209,7 +191,7 @@ mv_exec_path(maneuver_ids_trajectory_t *trajectory,
  * Yields to maneuver_pause_wait.
  */
 genom_event
-mv_exec_servo(maneuver_configuration_s *reference,
+mv_exec_servo(or_rigid_body_state *reference,
               const maneuver_desired *desired, maneuver_log_s **log,
               const genom_context self)
 {
@@ -217,29 +199,51 @@ mv_exec_servo(maneuver_configuration_s *reference,
   static const double dt2_2 = dt*dt/2.;
   static const double dt3_6 = dt*dt2_2/3.;
 
-  or_pose_estimator_state *ddata;
+  or_rigid_body_state *ddata;
   struct timeval tv;
-  int i;
 
   /* integration */
   or_t3d_pos &p = reference->pos._value;
   or_t3d_att &q = reference->att._value;
-  maneuver_v6d &v = reference->vel;
-  maneuver_v6d &a = reference->acc;
-  maneuver_v6d &j = reference->jer;
+  or_t3d_vel &v = reference->vel._value;
+  or_t3d_avel &w = reference->avel._value;
+  or_t3d_acc &a = reference->acc._value;
+  or_t3d_aacc &aw = reference->aacc._value;
+  or_t3d_jerk &j = reference->jerk._value;
+
+  if (!reference->vel._present) {
+    reference->vel._present = true;
+    v.vx = v.vy = v.vz = 0.;
+  }
+  if (!reference->avel._present) {
+    reference->avel._present = true;
+    w.wx = w.wy = w.wz = 0.;
+  }
+  if (!reference->acc._present) {
+    reference->acc._present = true;
+    a.ax = a.ay = a.az = 0.;
+  }
+  if (!reference->aacc._present) {
+    reference->aacc._present = true;
+    aw.awx = aw.awy = aw.awz = 0.;
+  }
+  if (!reference->jerk._present) {
+    reference->jerk._present = true;
+    j.jx = j.jy = j.jz = 0.;
+  }
 
   if (reference->pos._present && reference->att._present) {
     double dyaw, qw, qz, dqw, dqz;
 
-    p.x += dt*v[0] + dt2_2*a[0] + dt3_6*j[0];
-    p.y += dt*v[1] + dt2_2*a[1] + dt3_6*j[1];
-    p.z += dt*v[2] + dt2_2*a[2] + dt3_6*j[2];
+    p.x += dt*v.vx + dt2_2*a.ax + dt3_6*j.jx;
+    p.y += dt*v.vy + dt2_2*a.ay + dt3_6*j.jy;
+    p.z += dt*v.vz + dt2_2*a.az + dt3_6*j.jz;
 
     /* XXX assumes roll/pitch == 0 */
     qw = q.qw;
     qz = q.qz;
 
-    dyaw = dt*v[5] + dt2_2*a[5] + dt3_6*j[5];
+    dyaw = dt*w.wz + dt2_2*aw.awz;
     if (fabs(dyaw) < 0.25) {
       double dyaw2 = dyaw * dyaw;
 
@@ -256,35 +260,36 @@ mv_exec_servo(maneuver_configuration_s *reference,
     q.qz = dqw*qz + dqz*qw;
   }
 
-  for(i = 0; i < 6; i++) {
-    v[i] += dt*a[i] + dt2_2*j[i];
-    a[i] += dt*j[i];
-  }
+  v.vx += dt*a.ax + dt2_2*j.jx;
+  v.vy += dt*a.ay + dt2_2*j.jy;
+  v.vz += dt*a.az + dt2_2*j.jz;
+  w.wz += dt*aw.awz;
+
+  a.ax += dt*j.jx;
+  a.ay += dt*j.jy;
+  a.az += dt*j.jz;
+
+  /* reset 0 values */
+  if (fabs(v.vx) < 1e-4 && fabs(v.vy) < 1e-4 && fabs(v.vz) < 1e-4)
+    reference->vel._present = false;
+  if (fabs(w.wx) < 1e-4 && fabs(w.wy) < 1e-4 && fabs(w.wz) < 1e-4)
+    reference->avel._present = false;
+
+  if (fabs(a.ax) < 1e-3 && fabs(a.ay) < 1e-3 && fabs(a.az) < 1e-3)
+    reference->acc._present = false;
+  if (fabs(aw.awx) < 1e-3 && fabs(aw.awy) < 1e-3 && fabs(aw.awz) < 1e-3)
+    reference->aacc._present = false;
+
+  if (fabs(j.jx) < 1e-2 && fabs(j.jy) < 1e-2 && fabs(j.jz) < 1e-2)
+    reference->jerk._present = false;
 
   /* publish */
+  gettimeofday(&tv, NULL);
   ddata = desired->data(self);
 
-  gettimeofday(&tv, NULL);
+  *ddata = *reference;
   ddata->ts.sec = tv.tv_sec;
   ddata->ts.nsec = 1000*tv.tv_usec;
-
-  ddata->pos = reference->pos;
-  ddata->att = reference->att;
-
-  ddata->vel._present = true;
-  ddata->vel._value.vx = v[0];
-  ddata->vel._value.vy = v[1];
-  ddata->vel._value.vz = v[2];
-
-  ddata->avel._present = true;
-  ddata->avel._value.wx = v[3];
-  ddata->avel._value.wy = v[4];
-  ddata->avel._value.wz = v[5];
-
-  ddata->acc._present = true;
-  ddata->acc._value.ax = a[0];
-  ddata->acc._value.ay = a[1];
-  ddata->acc._value.az = a[2];
 
   desired->write(self);
 
@@ -313,7 +318,7 @@ mv_exec_stop(const genom_context self)
  */
 static void
 mv_exec_log(const or_time_ts &ts,
-            const maneuver_configuration_s &s, maneuver_log_s *log)
+            const or_rigid_body_state &s, maneuver_log_s *log)
 {
   if (log->req.aio_fildes >= 0) {
     log->total++;
@@ -341,6 +346,24 @@ mv_exec_log(const or_time_ts &ts,
       qy = s.att._value.qy,
       qz = s.att._value.qz;
     const double yaw = atan2(2 * (qw*qz + qx*qy), 1 - 2 * (qy*qy + qz*qz));
+    const double
+      vx = s.vel._present ? s.vel._value.vx : 0.,
+      vy = s.vel._present ? s.vel._value.vy : 0.,
+      vz = s.vel._present ? s.vel._value.vz : 0.,
+      wx = s.avel._present ? s.avel._value.wx : 0.,
+      wy = s.avel._present ? s.avel._value.wy : 0.,
+      wz = s.avel._present ? s.avel._value.wz : 0.;
+    const double
+      ax = s.acc._present ? s.acc._value.ax : 0.,
+      ay = s.acc._present ? s.acc._value.ay : 0.,
+      az = s.acc._present ? s.acc._value.az : 0.,
+      awx = s.aacc._present ? s.aacc._value.awx : 0.,
+      awy = s.aacc._present ? s.aacc._value.awy : 0.,
+      awz = s.aacc._present ? s.aacc._value.awz : 0.;
+    const double
+      jx = s.jerk._present ? s.jerk._value.jx : 0.,
+      jy = s.jerk._present ? s.jerk._value.jy : 0.,
+      jz = s.jerk._present ? s.jerk._value.jz : 0.;
 
     log->req.aio_nbytes = snprintf(
       log->buffer, sizeof(log->buffer),
@@ -348,9 +371,9 @@ mv_exec_log(const or_time_ts &ts,
       log->skipped ? "\n" : "",
       ts.sec, ts.nsec,
       s.pos._value.x, s.pos._value.y, s.pos._value.z, 0., 0., yaw,
-      s.vel[0], s.vel[1], s.vel[2], s.vel[3], s.vel[4], s.vel[5],
-      s.acc[0], s.acc[1], s.acc[2], s.acc[3], s.acc[4], s.acc[5],
-      s.jer[0], s.jer[1], s.jer[2], s.jer[3], s.jer[4], s.jer[5]);
+      vx, vy, vz, wx, wy, wz,
+      ax, ay, az, awx, awy, awz,
+      jx, jy, jz, 0., 0., 0.);
 
     if (aio_write(&log->req)) {
       warn("log");

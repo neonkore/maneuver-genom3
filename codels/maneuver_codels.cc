@@ -36,7 +36,7 @@
  */
 genom_event
 mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
-               maneuver_configuration_s *reference,
+               or_rigid_body_state *reference,
                const genom_context self)
 {
   /* (re)start from current state if a trajectory is being executed */
@@ -282,10 +282,10 @@ mv_get_limits(maneuver_planner_s **planner, double *xmin, double *xmax,
  */
 genom_event
 mv_plan_velocity(const maneuver_planner_s *vplanner,
-                 const maneuver_configuration_s *reference, double vx,
+                 const or_rigid_body_state *reference, double vx,
                  double vy, double vz, double wz, double ax, double ay,
                  double az, double duration,
-                 sequence_maneuver_configuration_s *path,
+                 sequence_or_rigid_body_state *path,
                  const genom_context self)
 {
   struct timeval tv1, tv2;
@@ -296,20 +296,29 @@ mv_plan_velocity(const maneuver_planner_s *vplanner,
   genom_event e;
 
   /* uses the planner for velocity: position() is actually velocity etc. */
-  from.position()[0] = reference->vel[0];
-  from.position()[1] = reference->vel[1];
-  from.position()[2] = reference->vel[2];
-  from.position()[3] = reference->vel[5];
+  if (reference->vel._present) {
+    from.position()[0] = reference->vel._value.vx;
+    from.position()[1] = reference->vel._value.vy;
+    from.position()[2] = reference->vel._value.vz;
+  }
+  if (reference->avel._present) {
+    from.position()[3] = reference->avel._value.wz;
+  }
 
-  from.velocity()[0] = reference->acc[0];
-  from.velocity()[1] = reference->acc[1];
-  from.velocity()[2] = reference->acc[2];
-  from.velocity()[3] = reference->acc[5];
+  if (reference->acc._present) {
+    from.velocity()[0] = reference->acc._value.ax;
+    from.velocity()[1] = reference->acc._value.ay;
+    from.velocity()[2] = reference->acc._value.az;
+  }
+  if (reference->aacc._present) {
+    from.velocity()[3] = reference->aacc._value.awz;
+  }
 
-  from.acceleration()[0] = reference->jer[0];
-  from.acceleration()[1] = reference->jer[1];
-  from.acceleration()[2] = reference->jer[2];
-  from.acceleration()[3] = reference->jer[5];
+  if (reference->jerk._present) {
+    from.acceleration()[0] = reference->jerk._value.jx;
+    from.acceleration()[1] = reference->jerk._value.jy;
+    from.acceleration()[2] = reference->jerk._value.jz;
+  }
 
   to.position()[0] = vx;
   to.position()[1] = vy;
@@ -339,8 +348,8 @@ mv_plan_velocity(const maneuver_planner_s *vplanner,
  * Throws maneuver_e_limits.
  */
 genom_event
-mv_push_path(const sequence_maneuver_configuration_s *path,
-             maneuver_configuration_s *reference,
+mv_push_path(const sequence_or_rigid_body_state *path,
+             or_rigid_body_state *reference,
              maneuver_ids_trajectory_t *trajectory,
              const genom_context self)
 {
