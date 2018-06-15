@@ -48,13 +48,10 @@ mv_exec_start(or_rigid_body_state *reference,
               const genom_context self)
 {
   or_rigid_body_state *ddata;
-  struct timeval tv;
-
-  gettimeofday(&tv, NULL);
 
   ddata = desired->data(self);
-  ddata->ts.sec = tv.tv_sec;
-  ddata->ts.nsec = 1000*tv.tv_usec;
+  ddata->ts.sec = 0;
+  ddata->ts.nsec = 0;
   ddata->intrinsic = false;
   ddata->pos._present = false;
   ddata->att._present = false;
