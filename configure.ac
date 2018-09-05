@@ -18,7 +18,7 @@ dnl
 
 AC_PREREQ(2.59)
 
-AC_INIT([maneuver-genom3],[1.3],[openrobots@laas.fr])
+AC_INIT([maneuver-genom3],[1.4],[openrobots@laas.fr])
 AC_CONFIG_MACRO_DIR([autoconf])
 AC_CONFIG_AUX_DIR([autoconf])
 AC_CONFIG_HEADERS([autoconf/acmaneuver.h])
@@ -26,7 +26,7 @@ AM_INIT_AUTOMAKE([foreign no-define])
 
 dnl Compilers
 dnl
-LT_INIT
+LT_INIT([disable-static])
 AC_PROG_CC
 AC_PROG_CXX
 
@@ -44,8 +44,10 @@ PKG_CHECK_MODULES(requires, [
   libkdtp >= 1.2
 ])
 
-AC_PATH_PROG(GENOM3, [genom3], AC_MSG_ERROR([genom3 tool not found], 2))
-
+AC_PATH_PROG(GENOM3, [genom3], [no])
+if test "$GENOM3" = "no"; then
+  AC_MSG_ERROR([genom3 tool not found], 2)
+fi
 
 dnl --with-templates option
 AG_OPT_TEMPLATES([$GENOM3 ],
