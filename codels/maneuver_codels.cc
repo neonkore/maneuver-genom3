@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 LAAS/CNRS
+ * Copyright (c) 2016-2019 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution and use  in source  and binary  forms,  with or without
@@ -288,9 +288,6 @@ mv_plan_velocity(const maneuver_planner_s *vplanner,
                  sequence_or_rigid_body_state *path,
                  const genom_context self)
 {
-  struct timeval tv1, tv2;
-  gettimeofday(&tv1, NULL);
-
   kdtp::State from(vplanner->robot);
   kdtp::State to(vplanner->robot);
   genom_event e;
@@ -335,9 +332,6 @@ mv_plan_velocity(const maneuver_planner_s *vplanner,
   if (e) return e;
   e = mv_sample_velocity(reference->pos, reference->att, lpath, path, self);
   if (e) return e;
-
-  gettimeofday(&tv2, NULL);
-  printf("%g\n", tv2.tv_sec - tv1.tv_sec + 1e-6*(tv2.tv_usec - tv1.tv_usec));
 
   return genom_ok;
 }

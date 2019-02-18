@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 LAAS/CNRS
+ * Copyright (c) 2018-2019 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution  and  use  in  source  and binary  forms,  with  or  without
@@ -147,7 +147,6 @@ mv_sample_velocity(const optional_or_t3d_pos &fromp,
   if (path->_maximum < i || path->_maximum > 2 * i)
     if (genom_sequence_reserve(path, i)) return maneuver_e_sys(NULL, self);
   path->_length = i;
-  printf("samples %zu\n", i);
 
 
   /* fill constant fields along path */
