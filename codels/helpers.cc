@@ -146,7 +146,7 @@ mv_sample_velocity(const optional_or_t3d_pos &fromp,
   /* set path length, including start & end configurations */
   i = 2 + p.duration()/dt;
   if (path->_maximum < i || path->_maximum > 2 * i)
-    if (genom_sequence_reserve(path, i)) return maneuver_e_sys(NULL, self);
+    if (genom_sequence_reserve(path, i)) return mv_e_sys_error(NULL, self);
   path->_length = i;
 
 
