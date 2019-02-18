@@ -37,7 +37,8 @@ mv_check_duration(const kdtp::LocalPath &p, const double duration,
                   const genom_context self)
 {
   /* consider limits */
-  if (duration > 0. && p.duration() > duration)
+  if (duration > 0. &&
+      p.duration() > duration + maneuver_control_period_ms/1000.)
     return maneuver_e_limits(self);
 
   return genom_ok;
