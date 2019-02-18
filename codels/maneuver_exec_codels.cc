@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 LAAS/CNRS
+ * Copyright (c) 2016-2019 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution and use  in source  and binary  forms,  with or without
@@ -107,11 +107,13 @@ mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
   if (reference->acc._present) return maneuver_servo;
   if (reference->aacc._present) return maneuver_servo;
   if (reference->jerk._present) return maneuver_servo;
+  if (reference->snap._present) return maneuver_servo;
 
 
   /* no motion */
   ddata = desired->data(self);
-  if (ddata->vel._present || ddata->avel._present || ddata->acc._present) {
+  if (ddata->vel._present || ddata->avel._present || ddata->acc._present ||
+      ddata->aacc._present || ddata->jerk._present || ddata->snap._present) {
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
@@ -279,6 +281,8 @@ mv_exec_servo(or_rigid_body_state *reference,
 
   if (fabs(j.jx) < 1e-2 && fabs(j.jy) < 1e-2 && fabs(j.jz) < 1e-2)
     reference->jerk._present = false;
+
+  reference->snap._present = false;
 
   /* publish */
   gettimeofday(&tv, NULL);
