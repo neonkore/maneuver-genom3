@@ -134,7 +134,7 @@ component maneuver {
     codel<wait> mv_plan_wait(in trajectory)
       yield pause::wait, ether;
 
-    throw e_nostate, e_limits;
+    throw e_nostate, e_limits, e_sys;
     interrupt take_off, goto, waypoint, replay, stop;
   };
 
@@ -155,7 +155,7 @@ component maneuver {
     codel<wait> mv_plan_wait(in trajectory)
       yield pause::wait, ether;
 
-    throw e_nostate, e_limits;
+    throw e_nostate, e_limits, e_sys;
     interrupt take_off, goto, waypoint, replay, stop;
   };
 
@@ -179,7 +179,7 @@ component maneuver {
     codel<wait> mv_no_wait()
       yield ether;
 
-    throw e_nostate, e_limits;
+    throw e_nostate, e_limits, e_sys;
     interrupt waypoint, stop;
   };
 
@@ -198,7 +198,7 @@ component maneuver {
                            in duration, out path);
     codel mv_push_path(in path, out reference, inout trajectory);
 
-    throw e_limits;
+    throw e_limits, e_sys;
     interrupt take_off, goto, replay, stop;
   };
 
@@ -245,6 +245,7 @@ component maneuver {
     codel<wait> mv_plan_wait(in trajectory)
       yield pause::wait, ether;
 
+    throw e_limits, e_sys;
     interrupt take_off, goto, waypoint, replay;
   };
 
