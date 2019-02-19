@@ -40,9 +40,10 @@ mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
                const genom_context self)
 {
   /* (re)start from current state if a trajectory is being executed */
-  if (trajectory->t._length > 0) {
-    *reference = trajectory->t._buffer[trajectory->i];
-    trajectory->t._length = 0;
+  if (trajectory->i + 1 < trajectory->t._length) {
+    trajectory->t._buffer[0] = trajectory->t._buffer[trajectory->i];
+    *reference = trajectory->t._buffer[trajectory->i + 1];
+    trajectory->t._length = 1;
     trajectory->i = 0;
   }
 
