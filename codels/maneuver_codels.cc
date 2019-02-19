@@ -227,10 +227,10 @@ mv_set_snap_limit(maneuver_planner_s **planner,
 
   for(i = 0; i < 3; i++) {
     (*vplanner)->robot.getDof(i).setJerkMax(s);
-    (*vplanner)->robot.getDof(i).setSnapMax(1000. * s);
+    (*vplanner)->robot.getDof(i).setSnapMax(100000. * s);
   }
   (*vplanner)->robot.getDof(3).setJerkMax(dddw);
-  (*vplanner)->robot.getDof(3).setSnapMax(1000. * dddw);
+  (*vplanner)->robot.getDof(3).setSnapMax(100000. * dddw);
 
   return genom_ok;
 }

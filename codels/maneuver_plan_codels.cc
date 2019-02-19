@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 LAAS/CNRS
+ * Copyright (c) 2016-2019 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution and use  in source  and binary  forms,  with or without
@@ -41,24 +41,24 @@ mv_plan_start(maneuver_ids *ids, const genom_context self)
   /* the trajectory planner */
   ids->planner = new maneuver_planner_s;
   ids->planner->robot.addDof(
-    kdtp::Dof(-3.5, 3.5, vmax, amax, jmax, 50*jmax, false));
+    kdtp::Dof(-3.5, 3.5, vmax, amax, jmax, 100*jmax, false));
   ids->planner->robot.addDof(
-    kdtp::Dof(-1.5, 1.5, vmax, amax, jmax, 50*jmax, false));
+    kdtp::Dof(-1.5, 1.5, vmax, amax, jmax, 100*jmax, false));
   ids->planner->robot.addDof(
-    kdtp::Dof( 0.,  5.,  vmax, amax, jmax, 50*jmax, false));
+    kdtp::Dof( 0.,  5.,  vmax, amax, jmax, 100*jmax, false));
   ids->planner->robot.addDof(
     kdtp::Dof(-3*M_PI, 3*M_PI, wmax, 10*wmax, 100*wmax, 1000*wmax, true));
 
   /* the velocity planner */
   ids->vplanner = new maneuver_planner_s;
   ids->vplanner->robot.addDof(
-    kdtp::Dof(-vmax, vmax, amax, jmax, 50*jmax, 1000*jmax, false));
+    kdtp::Dof(-vmax, vmax, amax, jmax, 100*jmax, 100000*jmax, false));
   ids->vplanner->robot.addDof(
-    kdtp::Dof(-vmax, vmax, amax, jmax, 50*jmax, 1000*jmax, false));
+    kdtp::Dof(-vmax, vmax, amax, jmax, 100*jmax, 100000*jmax, false));
   ids->vplanner->robot.addDof(
-    kdtp::Dof(-vmax, vmax, amax, jmax, 50*jmax, 1000*jmax, false));
+    kdtp::Dof(-vmax, vmax, amax, jmax, 100*jmax, 100000*jmax, false));
   ids->vplanner->robot.addDof(
-    kdtp::Dof(-wmax, wmax, 10*wmax, 100*wmax, 1000*wmax, 10000*wmax, true));
+    kdtp::Dof(-wmax, wmax, 10*wmax, 100*wmax, 1000*wmax, 100000*wmax, true));
 
   /* init logging */
   ids->log = new maneuver_log_s;
