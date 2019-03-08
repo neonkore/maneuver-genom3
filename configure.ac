@@ -1,6 +1,6 @@
 dnl Autoconf file for building maneuver codels library.
 dnl
-dnl Copyright (c) 2016-2018 LAAS/CNRS
+dnl Copyright (c) 2016-2019 LAAS/CNRS
 dnl All rights reserved.
 dnl
 dnl Redistribution and use  in source  and binary  forms,  with or without
@@ -44,8 +44,10 @@ PKG_CHECK_MODULES(requires, [
   libkdtp >= 1.2
 ])
 
-AC_PATH_PROG(GENOM3, [genom3], AC_MSG_ERROR([genom3 tool not found], 2))
-
+AC_PATH_PROG(GENOM3, [genom3], [no])
+if test "$GENOM3" = "no"; then
+  AC_MSG_ERROR([genom3 tool not found], 2)
+fi
 
 dnl --with-templates option
 AG_OPT_TEMPLATES([$GENOM3 ],

@@ -32,7 +32,7 @@
 /** Validation codel mv_plan_cancel of activity take_off.
  *
  * Returns genom_ok.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
@@ -56,7 +56,7 @@ mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
 /** Validation codel mv_plan_cancel of activity goto.
  *
  * Returns genom_ok.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 /* already defined in service take_off validation */
 
@@ -67,7 +67,7 @@ mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
 /** Validation codel mv_plan_cancel of function velocity.
  *
  * Returns genom_ok.
- * Throws maneuver_e_limits.
+ * Throws maneuver_e_limits, maneuver_e_sys.
  */
 /* already defined in service take_off validation */
 
@@ -89,7 +89,7 @@ mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
 /** Validation codel mv_plan_cancel of activity stop.
  *
  * Returns genom_ok.
- * Throws .
+ * Throws maneuver_e_limits, maneuver_e_sys.
  */
 /* already defined in service take_off validation */
 
@@ -279,7 +279,7 @@ mv_get_limits(maneuver_planner_s **planner, double *xmin, double *xmax,
 /** Codel mv_plan_velocity of function velocity.
  *
  * Returns genom_ok.
- * Throws maneuver_e_limits.
+ * Throws maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_plan_velocity(const maneuver_planner_s *vplanner,
@@ -340,7 +340,7 @@ mv_plan_velocity(const maneuver_planner_s *vplanner,
 /** Codel mv_push_path of function velocity.
  *
  * Returns genom_ok.
- * Throws maneuver_e_limits.
+ * Throws maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_push_path(const sequence_or_rigid_body_state *path,

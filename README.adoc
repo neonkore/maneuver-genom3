@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2018 LAAS/CNRS
+// Copyright (c) 2016-2019 LAAS/CNRS
 // All rights reserved.
 //
 // Redistribution and use  in source  and binary  forms,  with or without
@@ -49,8 +49,8 @@ a|.Data structure
 [disc]
  * `struct ::or_pose_estimator::state` `state`
  ** `struct ::or::time::ts` `ts`
- *** `unsigned long` `sec`
- *** `unsigned long` `nsec`
+ *** `long` `sec`
+ *** `long` `nsec`
  ** `boolean` `intrinsic`
  ** `optional< struct ::or::t3d::pos >` `pos`
  *** `double` `x`
@@ -106,8 +106,8 @@ a|.Data structure
 [disc]
  * `struct ::or_rigid_body::state` `desired`
  ** `struct ::or::time::ts` `ts`
- *** `unsigned long` `sec`
- *** `unsigned long` `nsec`
+ *** `long` `sec`
+ *** `long` `nsec`
  ** `boolean` `intrinsic`
  ** `optional< struct ::or::t3d::pos >` `pos`
  *** `double` `x`
@@ -331,6 +331,10 @@ a|.Throws
 
  * `exception ::maneuver::e_limits`
 
+ * `exception ::maneuver::e_sys`
+ ** `short` `code`
+ ** `string<128>` `what`
+
 a|.Context
 [disc]
   * In task `<<plan>>`
@@ -367,6 +371,10 @@ a|.Throws
  * `exception ::maneuver::e_nostate`
 
  * `exception ::maneuver::e_limits`
+
+ * `exception ::maneuver::e_sys`
+ ** `short` `code`
+ ** `string<128>` `what`
 
 a|.Context
 [disc]
@@ -419,6 +427,10 @@ a|.Throws
 
  * `exception ::maneuver::e_limits`
 
+ * `exception ::maneuver::e_sys`
+ ** `short` `code`
+ ** `string<128>` `what`
+
 a|.Context
 [disc]
   * In task `<<plan>>`
@@ -456,6 +468,10 @@ a|.Inputs
 a|.Throws
 [disc]
  * `exception ::maneuver::e_limits`
+
+ * `exception ::maneuver::e_sys`
+ ** `short` `code`
+ ** `string<128>` `what`
 
 a|.Context
 [disc]
@@ -521,6 +537,14 @@ Wait until last waypoint/goto point is reached
 
 [role="small", width="50%", float="right", cols="1"]
 |===
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_limits`
+
+ * `exception ::maneuver::e_sys`
+ ** `short` `code`
+ ** `string<128>` `what`
+
 a|.Context
 [disc]
   * In task `<<plan>>`
@@ -530,7 +554,7 @@ a|.Context
   * Interrupts `<<replay>>`
 |===
 
-Cancel any motion and set the desired state to empty
+Cancel any motion and bring the velocity to zero
 
 '''
 
@@ -543,8 +567,8 @@ a|.Outputs
 [disc]
  * `struct ::or_rigid_body::state` `reference`
  ** `struct ::or::time::ts` `ts`
- *** `unsigned long` `sec`
- *** `unsigned long` `nsec`
+ *** `long` `sec`
+ *** `long` `nsec`
  ** `boolean` `intrinsic`
  ** `optional< struct ::or::t3d::pos >` `pos`
  *** `double` `x`

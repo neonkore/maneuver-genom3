@@ -141,7 +141,7 @@ mv_current_state_read(const maneuver_state *state,
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_exec.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_plan_take_off(const maneuver_planner_s *planner,
@@ -200,7 +200,7 @@ mv_plan_take_off(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_exec.
  * Yields to maneuver_wait.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_plan_exec(const sequence_or_rigid_body_state *path,
@@ -220,7 +220,7 @@ mv_plan_exec(const sequence_or_rigid_body_state *path,
  *
  * Triggered by maneuver_wait.
  * Yields to maneuver_pause_wait, maneuver_ether.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_plan_wait(const maneuver_ids_trajectory_t *trajectory,
@@ -236,7 +236,7 @@ mv_plan_wait(const maneuver_ids_trajectory_t *trajectory,
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_exec.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_plan_goto(const maneuver_planner_s *planner,
@@ -298,7 +298,7 @@ mv_plan_goto(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_exec.
  * Yields to maneuver_wait.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 /* already defined in service take_off */
 
@@ -307,7 +307,7 @@ mv_plan_goto(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_wait.
  * Yields to maneuver_pause_wait, maneuver_ether.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 /* already defined in service take_off */
 
@@ -318,7 +318,7 @@ mv_plan_goto(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_exec.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_plan_waypoint(const maneuver_planner_s *planner,
@@ -390,7 +390,7 @@ mv_plan_waypoint(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_exec, maneuver_stop.
  * Yields to maneuver_wait.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 /* already defined in service take_off */
 
@@ -399,7 +399,7 @@ mv_plan_waypoint(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_wait.
  * Yields to maneuver_ether.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_nostate, maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_no_wait(const genom_context self)
@@ -636,7 +636,7 @@ mv_replay_read(const maneuver_planner_s *planner,
  *
  * Triggered by maneuver_start.
  * Yields to maneuver_exec, maneuver_ether.
- * Throws maneuver_e_nostate, maneuver_e_limits.
+ * Throws maneuver_e_limits, maneuver_e_sys.
  */
 genom_event
 mv_plan_zero(const maneuver_planner_s *vplanner,
@@ -659,6 +659,7 @@ mv_plan_zero(const maneuver_planner_s *vplanner,
  *
  * Triggered by maneuver_exec.
  * Yields to maneuver_wait.
+ * Throws maneuver_e_limits, maneuver_e_sys.
  */
 /* already defined in service take_off */
 
@@ -667,5 +668,6 @@ mv_plan_zero(const maneuver_planner_s *vplanner,
  *
  * Triggered by maneuver_wait.
  * Yields to maneuver_pause_wait, maneuver_ether.
+ * Throws maneuver_e_limits, maneuver_e_sys.
  */
 /* already defined in service take_off */
