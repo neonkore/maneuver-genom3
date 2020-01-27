@@ -7,5 +7,6 @@ includedir=${prefix}/codels
 Name: maneuver-genom3
 Description: maneuver interface and codels library
 Version: @PACKAGE_VERSION@
-Requires: openrobots2-idl >= 2.0, libkdtp >= 1.2
+Requires: openrobots2-idl >= 2.0
 Libs: ${libdir}/libmaneuver_codels.la
+Libs.private: @codels_requires_LIBS@

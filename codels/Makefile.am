@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016-2019 LAAS/CNRS
+# Copyright (c) 2016-2020 LAAS/CNRS
 # All rights reserved.
 #
 # Redistribution and use  in source  and binary  forms,  with or without
@@ -16,17 +16,18 @@
 #
 lib_LTLIBRARIES = libmaneuver_codels.la
 
-libmaneuver_codels_la_SOURCES=	maneuver_c_types.h
-libmaneuver_codels_la_SOURCES+=	maneuver_codels.cc
-libmaneuver_codels_la_SOURCES+=	maneuver_plan_codels.cc
-libmaneuver_codels_la_SOURCES+=	maneuver_exec_codels.cc
+libmaneuver_codels_la_SOURCES  =	maneuver_c_types.h
+libmaneuver_codels_la_SOURCES +=	maneuver_codels.cc
+libmaneuver_codels_la_SOURCES +=	maneuver_plan_codels.cc
+libmaneuver_codels_la_SOURCES +=	maneuver_exec_codels.cc
+libmaneuver_codels_la_SOURCES +=	helpers.cc
+libmaneuver_codels_la_SOURCES +=	codels.h
 
-libmaneuver_codels_la_SOURCES+=	helpers.cc
-libmaneuver_codels_la_SOURCES+=	codels.h
-
-libmaneuver_codels_la_CPPFLAGS=	$(requires_CFLAGS)
-libmaneuver_codels_la_LDFLAGS=	$(requires_LIBS)
-libmaneuver_codels_la_LDFLAGS+=	-release $(PACKAGE_VERSION)
+libmaneuver_codels_la_CPPFLAGS =	$(requires_CFLAGS)
+libmaneuver_codels_la_LIBADD   =	$(requires_LIBS)
+libmaneuver_codels_la_CPPFLAGS+=	$(codels_requires_CFLAGS)
+libmaneuver_codels_la_LIBADD  +=	$(codels_requires_LIBS)
+libmaneuver_codels_la_LDFLAGS  =	-release $(PACKAGE_VERSION)
 
 
 # idl  mappings

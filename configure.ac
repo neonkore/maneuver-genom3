@@ -1,6 +1,6 @@
 dnl Autoconf file for building maneuver codels library.
 dnl
-dnl Copyright (c) 2016-2019 LAAS/CNRS
+dnl Copyright (c) 2016-2020 LAAS/CNRS
 dnl All rights reserved.
 dnl
 dnl Redistribution and use  in source  and binary  forms,  with or without
@@ -30,12 +30,24 @@ LT_INIT([disable-static])
 AC_PROG_CC
 AC_PROG_CXX
 
+
 dnl Features
 AC_SEARCH_LIBS([aio_write], [rt],, AC_MSG_ERROR([aio_write() not found], 2))
 dnl glibc messed up this funtion
 AC_LANG_PUSH([C++])
 AC_FUNC_STRERROR_R
 AC_LANG_POP
+
+
+dnl Require GNU make
+AC_CACHE_CHECK([for GNU make], [ac_cv_path_MAKE],
+  [AC_PATH_PROGS_FEATURE_CHECK([MAKE], [make gmake],
+    [case `$ac_path_MAKE --version 2>/dev/null` in
+       *GNU*) ac_cv_path_MAKE=$ac_path_MAKE; ac_path_MAKE_found=:;;
+     esac],
+    [AC_MSG_ERROR([could not find GNU make])])])
+AC_SUBST([MAKE], [$ac_cv_path_MAKE])
+
 
 dnl External packages
 PKG_CHECK_MODULES(requires, [
