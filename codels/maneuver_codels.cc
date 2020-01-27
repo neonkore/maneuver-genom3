@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 LAAS/CNRS
+ * Copyright (c) 2016-2020 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution and use  in source  and binary  forms,  with or without
@@ -106,14 +106,10 @@ mv_set_bounds(maneuver_planner_s **planner, double xmin, double xmax,
               double ymin, double ymax, double zmin, double zmax,
               double yawmin, double yawmax, const genom_context self)
 {
-  (*planner)->robot.getDof(0).setPositionMin(xmin);
-  (*planner)->robot.getDof(0).setPositionMax(xmax);
-  (*planner)->robot.getDof(1).setPositionMin(ymin);
-  (*planner)->robot.getDof(1).setPositionMax(ymax);
-  (*planner)->robot.getDof(2).setPositionMin(zmin);
-  (*planner)->robot.getDof(2).setPositionMax(zmax);
-  (*planner)->robot.getDof(3).setPositionMin(yawmin);
-  (*planner)->robot.getDof(3).setPositionMax(yawmax);
+  (*planner)->robot.getDof(0).setPositionMinMax(xmin, xmax);
+  (*planner)->robot.getDof(1).setPositionMinMax(ymin, ymax);
+  (*planner)->robot.getDof(2).setPositionMinMax(zmin, zmax);
+  (*planner)->robot.getDof(3).setPositionMinMax(yawmin, yawmax);
   return genom_ok;
 }
 

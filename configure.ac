@@ -53,7 +53,9 @@ dnl External packages
 PKG_CHECK_MODULES(requires, [
   genom3 >= 2.99.4
   openrobots2-idl >= 2.0
-  libkdtp >= 1.2
+])
+PKG_CHECK_MODULES(codels_requires, [
+  libkdtp >= 1.3
 ])
 
 AC_PATH_PROG(GENOM3, [genom3], [no])
