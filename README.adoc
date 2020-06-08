@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2020 LAAS/CNRS
+// Copyright (c) 2016-2021 LAAS/CNRS
 // All rights reserved.
 //
 // Redistribution and use  in source  and binary  forms,  with or without
@@ -14,6 +14,7 @@
 //
 //                                      Anthony Mallet on Mon Aug 22 2016
 //
+
 
 // This file was generated from maneuver.gen by the skeleton
 // template. Manual changes should be preserved, although they should
@@ -144,6 +145,61 @@ a|.Data structure
  *** `double` `sz`
 
 |===
+
+'''
+
+[[horizon]]
+=== horizon (out)
+
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Data structure
+[disc]
+ * `sequence< struct ::or_rigid_body::state >` `horizon`
+ ** `struct ::or::time::ts` `ts`
+ *** `long` `sec`
+ *** `long` `nsec`
+ ** `boolean` `intrinsic`
+ ** `optional< struct ::or::t3d::pos >` `pos`
+ *** `double` `x`
+ *** `double` `y`
+ *** `double` `z`
+ ** `optional< struct ::or::t3d::att >` `att`
+ *** `double` `qw`
+ *** `double` `qx`
+ *** `double` `qy`
+ *** `double` `qz`
+ ** `optional< struct ::or::t3d::vel >` `vel`
+ *** `double` `vx`
+ *** `double` `vy`
+ *** `double` `vz`
+ ** `optional< struct ::or::t3d::avel >` `avel`
+ *** `double` `wx`
+ *** `double` `wy`
+ *** `double` `wz`
+ ** `optional< struct ::or::t3d::acc >` `acc`
+ *** `double` `ax`
+ *** `double` `ay`
+ *** `double` `az`
+ ** `optional< struct ::or::t3d::aacc >` `aacc`
+ *** `double` `awx`
+ *** `double` `awy`
+ *** `double` `awz`
+ ** `optional< struct ::or::t3d::jerk >` `jerk`
+ *** `double` `jx`
+ *** `double` `jy`
+ *** `double` `jz`
+ ** `optional< struct ::or::t3d::snap >` `snap`
+ *** `double` `sx`
+ *** `double` `sy`
+ *** `double` `sz`
+
+|===
+
+Moving horizon of the current motion.
+
+See <<set_horizon>> to configure this port.
 
 '''
 
@@ -292,6 +348,29 @@ a|.Outputs
  * `double` `dddw`
 
 |===
+
+'''
+
+[[set_horizon]]
+=== set_horizon (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `unsigned long` `horizon` Amount of time (s)
+
+ * `unsigned long` `samples` Number of samples
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_sys`
+ ** `short` `code`
+ ** `string<128>` `what`
+
+|===
+
+Set length and sampling time of horizon port
 
 '''
 
@@ -608,6 +687,50 @@ a|.Outputs
 
 '''
 
+[[set_horizon]]
+=== set_horizon (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `horizon` Amount of time (s)
+
+ * `unsigned long` `samples` Number of samples
+
+a|.Outputs
+[disc]
+ * `double` `horizon` Amount of time (s)
+
+ * `unsigned long` `samples` Number of samples
+
+a|.Throws
+[disc]
+ * `exception ::maneuver::e_sys`
+ ** `short` `code`
+ ** `string<128>` `what`
+
+a|.Context
+[disc]
+  * In task `<<exec>>`
+  (frequency 200.0 _Hz_)
+  * Updates port `<<horizon>>`
+|===
+
+Set sampling rate and duration of horizon port
+
+This service activates the publication of the `horizon` port.
+The input parameters are adapted to match the internal
+sampling rate of trajectories, but are guaranteed to be at
+least as big as requested. The actual values are returned as
+output parameters
+
+Passing 0 as the number of samples uses the internal
+sampling rate. Passing 0 for both duration and number of
+samples disables publishing of the `horizon` port.
+
+'''
+
 [[log]]
 === log (function)
 
@@ -679,6 +802,7 @@ a|.Context
 [disc]
   * Frequency 200.0 _Hz_
 * Updates port `<<desired>>`
+* Updates port `<<horizon>>`
 |===
 
 '''

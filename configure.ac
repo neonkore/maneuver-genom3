@@ -1,6 +1,6 @@
 dnl Autoconf file for building maneuver codels library.
 dnl
-dnl Copyright (c) 2016-2020 LAAS/CNRS
+dnl Copyright (c) 2016-2021 LAAS/CNRS
 dnl All rights reserved.
 dnl
 dnl Redistribution and use  in source  and binary  forms,  with or without
@@ -32,7 +32,7 @@ AC_PROG_CXX
 
 
 dnl Features
-AC_SEARCH_LIBS([aio_write], [rt],, AC_MSG_ERROR([aio_write() not found], 2))
+AC_SEARCH_LIBS([aio_write], [rt],, [AC_MSG_ERROR([aio_write() not found], 2)])
 dnl glibc messed up this funtion
 AC_LANG_PUSH([C++])
 AC_FUNC_STRERROR_R

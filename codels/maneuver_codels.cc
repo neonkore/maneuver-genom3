@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 LAAS/CNRS
+ * Copyright (c) 2016-2021 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution and use  in source  and binary  forms,  with or without
@@ -19,12 +19,15 @@
 #include <sys/time.h>
 
 #include <fcntl.h>
+#include <float.h>
+#include <math.h>
 #include <unistd.h>
 
 #include <cstdio>
 
 #include "maneuver_c_types.h"
 #include "codels.h"
+
 
 
 /* --- Activity take_off ------------------------------------------------ */
@@ -93,6 +96,49 @@ mv_plan_cancel(maneuver_ids_trajectory_t *trajectory,
  */
 /* already defined in service take_off validation */
 
+
+
+/* --- Activity set_horizon --------------------------------------------- */
+
+/** Validation codel mv_set_horizon of activity set_horizon.
+ *
+ * Returns genom_ok.
+ * Throws maneuver_e_sys.
+ */
+genom_event
+mv_set_horizon(double *horizon, uint32_t *samples, uint32_t *horizondt,
+               const genom_context self)
+{
+  uint32_t hdt;
+
+  /* disable horizon if requested or raise an error if parameters are
+   * inconsistent */
+  if (!*samples && fabs(*horizon) <= DBL_MIN) {
+    *horizondt = 0;
+    return genom_ok;
+  }
+  if (*horizon <= DBL_MIN) {
+    errno = EDOM;
+    return mv_e_sys_error("negative horizon", self);
+  }
+
+  /* adapt parameters to the exec task period */
+  if (!*samples)
+    hdt = 1;
+  else
+    hdt = 1000. * *horizon / *samples / maneuver_control_period_ms;
+  if (!hdt) {
+    errno = EDOM;
+    return mv_e_sys_error("too many samples", self);
+  }
+
+  /* return updated parameters */
+  *horizondt = hdt;
+  *samples = ceil(1000. * *horizon / hdt / maneuver_control_period_ms);
+  *horizon = *samples * hdt * maneuver_control_period_ms / 1000.;
+
+  return genom_ok;
+}
 
 
 /* --- Function set_bounds ---------------------------------------------- */

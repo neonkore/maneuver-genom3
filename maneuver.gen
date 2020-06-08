@@ -1,5 +1,5 @@
 /*/
- * Copyright (c) 2016-2020 LAAS/CNRS
+ * Copyright (c) 2016-2021 LAAS/CNRS
  * All rights reserved.
  *
  * Redistribution and use  in source  and binary  forms,  with or without
@@ -14,7 +14,7 @@
  *
  *                                      Anthony Mallet on Mon Aug 22 2016
  */
-#pragma require "openrobots2-idl >= 2.0"
+#pragma require "openrobots2-idl >= 2.1"
 
 #include "or/pose/pose_estimator.gen"
 #include "or/pose/rigid_body.gen"
@@ -29,6 +29,11 @@ component maneuver {
 
   port in	or_pose_estimator::state state;
   port out	or_rigid_body::state desired;
+  port out	or_rigid_body::trajectory horizon {
+    doc	"Moving horizon of the current motion.";
+    doc	"";
+    doc	"See <<set_horizon>> to configure this port.";
+  };
 
   exception e_nostate;
   exception e_limits;
@@ -49,6 +54,9 @@ component maneuver {
       sequence<or_rigid_body::state> t;
       unsigned long i;
     } trajectory;
+
+    /* horizon */
+    unsigned long horizondt;	/* delta sample time */
 
     /* logging */
     log_s log;
@@ -255,21 +263,47 @@ component maneuver {
   task exec {
     period control_period_ms ms;
 
-    codel<start> mv_exec_start(out reference, out trajectory, out desired)
+    codel<start> mv_exec_start(out ::ids, out desired, out horizon)
       yield wait;
     codel<wait> mv_exec_wait(in trajectory, in reference, out desired)
       yield pause::wait, wait, path, servo;
 
     codel<path> mv_exec_path(inout trajectory,
-                             in reference, out desired, inout log)
+                             in reference, out desired, inout log,
+                             in horizondt, out horizon)
       yield pause::path, wait;
-    codel<servo> mv_exec_servo(inout reference, out desired, inout log)
+    codel<servo> mv_exec_servo(inout reference, out desired, inout log,
+                               in horizondt, out horizon)
       yield pause::wait;
 
     codel<stop> mv_exec_stop() yield ether;
   };
 
   attribute get_reference(out reference);
+
+
+  activity set_horizon(inout double horizon = : "Amount of time (s)",
+                       inout unsigned long samples = : "Number of samples") {
+    doc		"Set sampling rate and duration of horizon port";
+    doc		"";
+    doc		"This service activates the publication of the `horizon` port.";
+    doc		"The input parameters are adapted to match the internal";
+    doc		"sampling rate of trajectories, but are guaranteed to be at";
+    doc		"least as big as requested. The actual values are returned as";
+    doc		"output parameters";
+    doc		"";
+    doc		"Passing 0 as the number of samples uses the internal";
+    doc		"sampling rate. Passing 0 for both duration and number of";
+    doc		"samples disables publishing of the `horizon` port.";
+
+    task	exec;
+
+    validate mv_set_horizon(local inout horizon, inout samples, out horizondt);
+
+    codel<start> mv_update_horizon(in samples, port out horizon)
+      yield ether;
+    throw e_sys;
+  };
 
 
   /* --- logging ----------------------------------------------------------- */

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016-2020 LAAS/CNRS
+# Copyright (c) 2016-2021 LAAS/CNRS
 # All rights reserved.
 #
 # Redistribution and use  in source  and binary  forms,  with or without
@@ -28,6 +28,8 @@ libmaneuver_codels_la_LIBADD   =	$(requires_LIBS)
 libmaneuver_codels_la_CPPFLAGS+=	$(codels_requires_CFLAGS)
 libmaneuver_codels_la_LIBADD  +=	$(codels_requires_LIBS)
 libmaneuver_codels_la_LDFLAGS  =	-release $(PACKAGE_VERSION)
+
+libmaneuver_codels_la_LIBADD  +=	-lm
 
 
 # idl  mappings
