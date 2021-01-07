@@ -351,26 +351,24 @@ a|.Outputs
 
 '''
 
-[[set_horizon]]
-=== set_horizon (function)
+[[set_state]]
+=== set_state (function)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
 a|.Inputs
 [disc]
- * `unsigned long` `horizon` Amount of time (s)
+ * `double` `x`
 
- * `unsigned long` `samples` Number of samples
+ * `double` `y`
 
-a|.Throws
-[disc]
- * `exception ::maneuver::e_sys`
- ** `short` `code`
- ** `string<128>` `what`
+ * `double` `z`
+
+ * `double` `yaw`
 
 |===
 
-Set length and sampling time of horizon port
+Set initial planning position
 
 '''
 

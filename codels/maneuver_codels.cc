@@ -316,6 +316,38 @@ mv_get_limits(maneuver_planner_s **planner, double *xmin, double *xmax,
 }
 
 
+/* --- Function set_state ----------------------------------------------- */
+
+/** Codel mv_set_state of function set_state.
+ *
+ * Returns genom_ok.
+ */
+genom_event
+mv_set_state(double x, double y, double z, double yaw,
+             or_rigid_body_state *reference, const genom_context self)
+{
+  reference->pos._value.x = x;
+  reference->pos._value.y = y;
+  reference->pos._value.z = z;
+  reference->pos._present = true;
+
+  reference->att._value.qw = std::cos(yaw/2.);
+  reference->att._value.qx = 0.;
+  reference->att._value.qy = 0.;
+  reference->att._value.qz = std::sin(yaw/2.);
+  reference->att._present = true;
+
+  /* reset velocity and derivatives */
+  reference->vel._present = false;
+  reference->avel._present = false;
+  reference->acc._present = false;
+  reference->aacc._present = false;
+  reference->jerk._present = false;
+
+  return genom_ok;
+}
+
+
 /* --- Function velocity ------------------------------------------------ */
 
 /** Codel mv_plan_velocity of function velocity.

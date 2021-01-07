@@ -116,6 +116,12 @@ component maneuver {
     codel<stop> mv_plan_stop(inout ::ids) yield ether;
   };
 
+  function set_state(in double x, in double y, in double z, in double yaw) {
+    doc		"Set initial planning position";
+
+    codel mv_set_state(in x, in y, in z, in yaw, out reference);
+  };
+
   activity set_current_state() {
     doc		"Set initial planning position to current one";
     task	plan;
