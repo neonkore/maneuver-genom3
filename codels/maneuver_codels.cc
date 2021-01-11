@@ -20,10 +20,10 @@
 
 #include <fcntl.h>
 #include <float.h>
-#include <math.h>
 #include <unistd.h>
 
 #include <cstdio>
+#include <cmath>
 
 #include "maneuver_c_types.h"
 #include "codels.h"
