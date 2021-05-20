@@ -272,14 +272,17 @@ component maneuver {
     codel<start> mv_exec_start(out ::ids, out desired, out horizon)
       yield wait;
     codel<wait> mv_exec_wait(in trajectory, in reference, out desired)
-      yield pause::wait, wait, path, servo;
+      yield pause::wait, path, servo;
 
     codel<path> mv_exec_path(inout trajectory,
                              in reference, out desired, inout log,
                              in horizondt, out horizon)
-      yield pause::path, wait;
+      yield pause::path, over;
     codel<servo> mv_exec_servo(inout reference, out desired, inout log,
                                in horizondt, out horizon)
+      yield pause::wait, over;
+
+    codel<over> mv_exec_over(out desired)
       yield pause::wait;
 
     codel<stop> mv_exec_stop() yield ether;

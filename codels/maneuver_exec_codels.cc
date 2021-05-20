@@ -87,8 +87,7 @@ mv_exec_start(maneuver_ids *ids, const maneuver_desired *desired,
 /** Codel mv_exec_wait of task exec.
  *
  * Triggered by maneuver_wait.
- * Yields to maneuver_pause_wait, maneuver_wait, maneuver_path,
- *           maneuver_servo.
+ * Yields to maneuver_pause_wait, maneuver_path, maneuver_servo.
  */
 genom_event
 mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
@@ -96,8 +95,6 @@ mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
              const maneuver_desired *desired,
              const genom_context self)
 {
-  or_rigid_body_state *ddata;
-
   /* if there is a trajectory, play it */
   if (trajectory->t._length > 0)
     return maneuver_path;
@@ -111,31 +108,6 @@ mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
   if (reference->jerk._present) return maneuver_servo;
   if (reference->snap._present) return maneuver_servo;
 
-
-  /* no motion - erase remaining _present flags */
-  ddata = desired->data(self);
-  if (ddata->vel._present || ddata->avel._present || ddata->acc._present ||
-      ddata->aacc._present || ddata->jerk._present || ddata->snap._present) {
-    struct timeval tv;
-
-    gettimeofday(&tv, NULL);
-
-    ddata->ts.sec = tv.tv_sec;
-    ddata->ts.nsec = 1000*tv.tv_usec;
-
-    ddata->vel._present = false;
-    ddata->avel._present = false;
-    ddata->acc._present = false;
-    ddata->aacc._present = false;
-    ddata->jerk._present = false;
-    ddata->snap._present = false;
-
-    desired->write(self);
-
-    /* return once with no pause to wake up plan task (if needed) */
-    return maneuver_wait;
-  }
-
   return maneuver_pause_wait;
 }
 
@@ -143,7 +115,7 @@ mv_exec_wait(const maneuver_ids_trajectory_t *trajectory,
 /** Codel mv_exec_path of task exec.
  *
  * Triggered by maneuver_path.
- * Yields to maneuver_pause_path, maneuver_wait.
+ * Yields to maneuver_pause_path, maneuver_over.
  */
 genom_event
 mv_exec_path(maneuver_ids_trajectory_t *trajectory,
@@ -159,7 +131,7 @@ mv_exec_path(maneuver_ids_trajectory_t *trajectory,
   if (trajectory->i >= trajectory->t._length) {
     trajectory->t._length = 0;
     trajectory->i = 0;
-    return maneuver_wait;
+    return maneuver_over; /* no pause wakes up plan task (if needed) */
   }
   or_rigid_body_state &s = trajectory->t._buffer[trajectory->i];
 
@@ -211,7 +183,7 @@ mv_exec_path(maneuver_ids_trajectory_t *trajectory,
   if (++trajectory->i >= trajectory->t._length) {
     trajectory->t._length = 0;
     trajectory->i = 0;
-    return maneuver_wait;
+    return maneuver_over; /* no pause wakes up plan task (if needed) */
   }
 
   return maneuver_pause_path;
@@ -221,7 +193,7 @@ mv_exec_path(maneuver_ids_trajectory_t *trajectory,
 /** Codel mv_exec_servo of task exec.
  *
  * Triggered by maneuver_servo.
- * Yields to maneuver_pause_wait.
+ * Yields to maneuver_pause_wait, maneuver_over.
  */
 genom_event
 mv_exec_servo(or_rigid_body_state *reference,
@@ -276,6 +248,50 @@ mv_exec_servo(or_rigid_body_state *reference,
   mv_exec_log(ddata->ts, *reference, *log);
 
   /* next */
+  if (!reference->vel._present &&
+      !reference->avel._present &&
+      !reference->acc._present &&
+      !reference->aacc._present &&
+      !reference->jerk._present &&
+      !reference->snap._present)
+    return maneuver_over; /* no pause wakes up plan task (if needed) */
+
+  return maneuver_pause_wait;
+}
+
+
+/** Codel mv_exec_over of task exec.
+ *
+ * Triggered by maneuver_over.
+ * Yields to maneuver_pause_wait.
+ */
+genom_event
+mv_exec_over(const maneuver_desired *desired,
+             const genom_context self)
+{
+  or_rigid_body_state *ddata;
+  struct timeval tv;
+
+  /* no motion - erase remaining _present flags */
+  ddata = desired->data(self);
+  if (!ddata->vel._present && !ddata->avel._present && !ddata->acc._present &&
+      !ddata->aacc._present && !ddata->jerk._present && !ddata->snap._present)
+    return maneuver_pause_wait;
+
+  gettimeofday(&tv, NULL);
+
+  ddata->ts.sec = tv.tv_sec;
+  ddata->ts.nsec = 1000*tv.tv_usec;
+
+  ddata->vel._present = false;
+  ddata->avel._present = false;
+  ddata->acc._present = false;
+  ddata->aacc._present = false;
+  ddata->jerk._present = false;
+  ddata->snap._present = false;
+
+  desired->write(self);
+
   return maneuver_pause_wait;
 }
 
